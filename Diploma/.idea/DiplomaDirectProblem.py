@@ -4,8 +4,8 @@ from numpy.linalg import inv
 import matplotlib.animation as animation
 
 eps = 0.1
-M = 30
-N = 50
+M = 200
+N = 300
 u_left = -8
 u_right = 4
 a = 0
@@ -19,13 +19,19 @@ q = []
 t = np.linspace(t_0, T, num=M + 1)
 x = np.linspace(a, b, num=N + 1)
 
+def fullprint(*args, **kwargs):
+  from pprint import pprint
+  import numpy
+  opt = numpy.get_printoptions()
+  numpy.set_printoptions(threshold=numpy.inf)
+  pprint(*args, **kwargs)
+  numpy.set_printoptions(**opt)
+
 for p in x:
     q.append(2 * p - 1 + 2 * np.sin(5 * np.pi * p) + 0.35)
 
-
 def u_init(x):
     return (x ** 2 - x - 2) - 6 * np.tanh((-3 * (x - 0.25)) / eps)
-
 
 # np.seterr(all='warn')
 def func(u):
@@ -42,6 +48,7 @@ def func(u):
     t3 = u[N-1]*((4-u[N-2])/x[N]-x[N-2])-(u[N - 1] * q[N - 1])
     f.itemset(-1 ,t1 * t2 + t3)
     return f
+
 
 
 def func_y(u):
@@ -63,7 +70,6 @@ def func_y(u):
             (u_right - u[N - 2]) / (x[N] - x[N - 2])) - q[N - 1])
     return f_y
 
-
 u = np.zeros((M + 1, N + 1))
 for tt in range(N + 1):
     u[0, tt] = u_init(x[tt])
@@ -71,18 +77,20 @@ for tt in range(N + 1):
 for m in range(M):
     tmp = ((1 + 1j) * (t[m + 1] - t[m]) / 2)
     tmp1 = np.eye(N - 1) - tmp * (func_y(u[m, :]))
-    w_1 = np.dot(inv(tmp1), func(u[m, :]))
+    w_1 = np.matmul(inv(tmp1),func(u[m, :]))
+    np.dot(inv(tmp1), func(u[m, :]))
     tmp2 = (t[m + 1] - t[m]) * w_1.real
     u[m + 1, 1:N] = u[m, 1:N] + np.transpose(tmp2)
     u[m + 1, 0] = u_left
     u[m + 1, N] = u_right
 
-fig = plt.figure(facecolor='white')
-ax = plt.axes(xlim=(a, b), ylim=(-9, 6))
-line, = ax.plot([], [], lw=3)  # line = объект кривой
-ax.grid(True)
-plt.show()
 
+plt.plot(t,u[:,:])
+plt.show()
+# fig = plt.figure(facecolor='white')
+# ax = plt.axes(xlim=(a, b), ylim=(-9, 6))
+# line, = ax.plot([], [], lw=3)  # line = объект кривой
+# ax.grid(True)
 
 # #Решение сопряженной задачи
 # def psiInit(t):
