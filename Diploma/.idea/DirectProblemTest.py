@@ -12,9 +12,6 @@ a = 0
 b = np.pi
 T = 1
 t_0 = 0
-tau = (T - t_0) / M
-h = (b - a) / N
-q = []
 t = np.linspace(t_0, T, M + 1)
 x = np.linspace(a, b, N + 1)
 
@@ -25,10 +22,7 @@ def tmp_f(x, t):
            np.sin(3 * np.pi * x) * (1 - 2 * t) * np.sin(x)
 
 def q(x):
-    return np.sin(3 * np.pi * x)
-
-# for i in range(N):
-#     print(x[i], i, q(x[i]))
+    return np.sin(3 * x)
 
 def u_func(x, t):
     return (1 - 2 * t) * np.sin(x)
@@ -36,17 +30,17 @@ def u_func(x, t):
 def func(u, t):
     f = np.zeros((N - 1, 1), dtype='float64')
     f.itemset(0, (2 * eps / (x[2] - x[0])) * ((u[2] - u[1]) / (x[2] - x[1]) - (u[1] - u_left) / (x[1] - x[0])) + \
-              (u[1] * (u[2] - u_left)) / (x[2] - x[0]) - (u[1] * q(x[1])) - tmp_f(0, 0)
+              (u[1] * (u[2] - u_left)) / (x[2] - x[0]) - (u[1] * q(x[1])) - tmp_f(x[0], t)
               )
-    for n in range(1, N - 1):
+    for n in range(1, N-1):
         kk = 2 * eps / (x[n + 1] - x[n - 1])
         k1 = ((u[n + 1] - u[n]) / (x[n + 1] - x[n])) - ((u[n] - u[n - 1]) / (x[n] - x[n - 1]))
         k2 = u[n] * ((u[n + 1] - u[n - 1]) / (x[n + 1] - x[n - 1]))
-        f.itemset(n, kk * k1 + k2 - u[n] * q(x[n]) - tmp_f(n, n))
+        f.itemset(n, kk * k1 + k2 - u[n] * q(x[n]) - tmp_f(x[n], t))
     t1 = 2 * eps / (x[N] - x[N - 2])
     t2 = ((u_right - u[N - 1]) / (x[N] - x[N - 1]) - ((u[N - 1] - u[N - 2]) / (x[N - 1] - x[N - 2])))
     t3 = u[N - 1] * ((u_right - u[N - 2]) / (x[N] - x[N - 2])) - (u[N - 1] * q(x[N - 1]))
-    f.itemset(-1, t1 * t2 + t3 - tmp_f(N - 1, N - 1))
+    f.itemset(-1, t1 * t2 + t3 - tmp_f(x[N - 1], t))
     return f
 
 
@@ -69,29 +63,43 @@ def func_y(u):
 
 
 u = np.zeros((M + 1, N + 1))
+y = np.zeros((M + 1, N - 1))
 for n in range(N + 1):
-    u[0, n] = u_func(n, 0)
+    u[0, n] = u_func(x[n], t_0)
+y[0, :] = u[0, 1:N]
 
+# for m in range(M):
+#     tmp = ((1 + 1j) * (t[m + 1] - t[m]) / 2)
+#     tmp1 = np.eye(N - 1) - tmp * (func_y(u[m, :]))
+#     w_1 = np.dot(inv(tmp1), func(u[m, :], (t[m] + t[m + 1]) / 2))
+#     tmp2 = (t[m + 1] - t[m]) * w_1.real
+#     u[m + 1, 0] = u_left
+#     u[m + 1, N] = u_right
+#     u[m + 1, 1:N] = u[m, 1:N] + np.transpose(tmp2)
+#     print(func(u[m, :],t[m]))
 for m in range(M):
-    tmp = ((1 + 1j) * (t[m + 1] - t[m]) / 2)
-    tmp1 = np.eye(N - 1) - tmp * (func_y(u[m, :]))
-    w_1 = np.dot(inv(tmp1), func(u[m, :], (t[m] + t[m + 1]) / 2))
+    tmp = ((1+1j)*(t[m+1]-t[m])/2)
+    tmp1 = np.eye(N - 1) - tmp * (func_y(y[m, :]))
+    w_1 = np.dot(inv(tmp1), func(y[m, :], (t[m] + t[m + 1]) / 2))
     tmp2 = (t[m + 1] - t[m]) * w_1.real
-    u[m + 1, 1:N] = u[m, 1:N] + np.transpose(tmp2)
-    u[m + 1, 0] = u_left
-    u[m + 1, N] = u_right
+    y[m + 1] = y[m] + np.transpose(tmp2)
+    u[m+1, 0] = u_left
+    u[m+1, 1:N] = y[m+1, :]
+    u[m+1, N] = u_right
 
 plt.axis([0, 1, -600, 600])
-plt.plot(t, u[:]);
+plt.plot(t, u);
 plt.show()
 
 fig2 = plt.figure(facecolor='white')
 ax = plt.axes(xlim=(0, 1), ylim=(-500, 500))
 line, = ax.plot([], [], lw=3)
 
-def redraw(i):
-    x = t
-    y = u[:, i+1]
-    line.set_data(x, y)
-anim = animation.FuncAnimation(fig2, redraw, frames=126, interval=100)
-plt.show()
+#
+# def redraw(i):
+#     x = t[i]
+#     y = func(u[i, :],t[i])
+# #u[:, i+1]
+#     line.set_data(x, y)
+# anim = animation.FuncAnimation(fig2, redraw, frames=126, interval=100)
+# plt.show()

@@ -3,6 +3,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 eps = 0.1
 dBdu = -1
+M = 50
+N = 30
+u_left = 0
+u_right = 0
+a = 0
+b = np.pi
+T = 1
+t_0 = 0
+tau = (T - t_0) / M
+h = (b - a) / N
+t = np.linspace(t_0, T, M + 1)
+x = np.linspace(a, b, N + 1)
 
 
 def u_init(x):
@@ -61,4 +73,4 @@ def example3(a, b, N, M, t_0, T, u_left, u_right, u_init):
     plt.ylabel('u')
     plt.show()
 
-example3(0,1,100,200,0,0.3,4,-8,u_init(x=1))
+example3(0,1,100,200,0,0.3,4,-8,u_init(x))
