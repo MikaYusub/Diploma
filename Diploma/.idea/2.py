@@ -43,8 +43,10 @@ def example3(a, b, N, M, t_0, T, u_left, u_right, u_init):
 
     u = np.zeros((M + 1, N + 1))
     y = np.zeros((M + 1, N - 1))
-    u[1, :] = u_init(x)
-    y[1, :] = u[1, 2:N]
+    for n in range(N + 1):
+        u[0, n] = u_init(x[n])
+    # u[1, :] = u_init(x)
+        y[1, :] = u[1, 2:N]
     for m in range(M):
         w_1 = (np.eye(N-1)
                - (1+1j)/2*(t[m+1]-t[m])*f_y(y[m, :], t[m],
@@ -54,9 +56,9 @@ def example3(a, b, N, M, t_0, T, u_left, u_right, u_init):
         u[m+1, 2:N] = y[m+1, :]
         u[m+1, N+1] = u_right
 
+    plt.plot(t, u, linewidth=3.0)
+    plt.xlabel('t')
+    plt.ylabel('u')
+    plt.show()
 
-plt.plot(t, u, linewidth=3.0)
-plt.xlabel('t')
-plt.ylabel('u')
-plt.show()
-
+example3(0,1,100,200,0,0.3,4,-8,u_init(x=1))

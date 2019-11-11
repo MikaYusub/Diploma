@@ -4,70 +4,67 @@ from numpy.linalg import inv
 import matplotlib.animation as animation
 
 eps = 0.1
-M = 200
-N = 300
+M = 50
+N = 30
 u_left = 0
 u_right = 0
 a = 0
-b = 1
-T = 0.3
+b = np.pi
+T = 1
 t_0 = 0
 tau = (T - t_0) / M
 h = (b - a) / N
-
+q = []
 t = np.linspace(t_0, T, M + 1)
 x = np.linspace(a, b, N + 1)
 
 
-def B(x, t):
+def tmp_f(x, t):
     return -eps * (1 - 2 * t) * np.sin(x) + 2 * np.sin(x) \
            + ((1 - 2 * t) ** 2) * np.sin(x) * np.cos(x) - \
            np.sin(3 * np.pi * x) * (1 - 2 * t) * np.sin(x)
 
-
 def q(x):
     return np.sin(3 * np.pi * x)
 
+# for i in range(N):
+#     print(x[i], i, q(x[i]))
 
 def u_func(x, t):
     return (1 - 2 * t) * np.sin(x)
 
-
 def func(u, t):
     f = np.zeros((N - 1, 1), dtype='float64')
     f.itemset(0, (2 * eps / (x[2] - x[0])) * ((u[2] - u[1]) / (x[2] - x[1]) - (u[1] - u_left) / (x[1] - x[0])) + \
-              (u[1] * (u[2] - u_left)) / (x[2] - x[0])
-              - (u[1] * q[1])
-              - B(N - 1, N - 1))
+              (u[1] * (u[2] - u_left)) / (x[2] - x[0]) - (u[1] * q(x[1])) - tmp_f(0, 0)
+              )
     for n in range(1, N - 1):
         kk = 2 * eps / (x[n + 1] - x[n - 1])
         k1 = ((u[n + 1] - u[n]) / (x[n + 1] - x[n])) - ((u[n] - u[n - 1]) / (x[n] - x[n - 1]))
         k2 = u[n] * ((u[n + 1] - u[n - 1]) / (x[n + 1] - x[n - 1]))
-        f.itemset(n, kk * k1 + k2 - u[n] * q[n] - B(N - 1, N - 1))
+        f.itemset(n, kk * k1 + k2 - u[n] * q(x[n]) - tmp_f(n, n))
     t1 = 2 * eps / (x[N] - x[N - 2])
     t2 = ((u_right - u[N - 1]) / (x[N] - x[N - 1]) - ((u[N - 1] - u[N - 2]) / (x[N - 1] - x[N - 2])))
-    t3 = u[N - 1] * ((u_right - u[N - 2]) / (x[N] - x[N - 2])) - (u[N - 1] * q[N - 1])
-    f.itemset(-1, t1 * t2 + t3 - B(N - 1, N - 1))
+    t3 = u[N - 1] * ((u_right - u[N - 2]) / (x[N] - x[N - 2])) - (u[N - 1] * q(x[N - 1]))
+    f.itemset(-1, t1 * t2 + t3 - tmp_f(N - 1, N - 1))
     return f
 
 
 def func_y(u):
     f_y = np.zeros((N - 1, N - 1), dtype='float64')
-    f_y.itemset((0, 0), 2 * (eps / (x[2] - x[0])) * (-1 / (x[2] - x[1]) - 1 / (x[1] - x[0]))
-                + (u[2] - u_left) / (x[2] - x[0]) - q(1))
-
+    f_y.itemset((0, 0), -2 * (eps / (x[2] - x[0])) * (1 / (x[2] - x[1]) + 1 / (x[1] - x[0])) + \
+                (u[2] - u_left) / (x[2] - x[0]) - q(x[1]))
     for n in range(1, N - 1):
         f_y.itemset((n, n - 1),
                     (2 * eps / (x[n + 1] - x[n - 1])) * (1 / (x[n] - x[n - 1])) - u[n] / (x[n + 1] - x[n - 1]))
     for n in range(1, N - 2):
-        f_y.itemset((n, n), (2 * eps / (x[n + 1] - x[n - 1])) * (-1 / (x[n + 1] - x[n]) - 1 / (x[n] - x[n - 1])) + \
-                    (u[n + 1] - u[n - 1]) / (x[n + 1] - x[n - 1]) - q(n))
+        f_y.itemset((n, n), (-2 * eps / (x[n + 1] - x[n - 1])) * (1 / (x[n + 1] - x[n]) + 1 / (x[n] - x[n - 1])) + \
+                    (u[n + 1] - u[n - 1]) / (x[n + 1] - x[n - 1]) - q(x[n]))
     for n in range(0, N - 2):
         f_y.itemset((n, n + 1),
                     (2 * eps / (x[n + 1] - x[n - 1])) * (1 / (x[n + 1] - x[n])) + u[n] / (x[n + 1] - x[n - 1]))
-
-    f_y.itemset((-1, -1), (2 * eps / (x[N] - x[N - 2])) * (-1 / (x[N] - x[N - 1]) - 1 / (x[N - 1] - x[N - 2])) + (
-            (u_right - u[N - 2]) / (x[N] - x[N - 2])) - q(N - 1))
+    f_y.itemset((-1, -1), (-2 * eps / (x[N] - x[N - 2])) * (1 / (x[N] - x[N - 1]) + 1 / (x[N - 1] - x[N - 2])) +
+                (u_right - u[N - 2]) / (x[N] - x[N - 2]) - q(x[N - 1]))
     return f_y
 
 
@@ -84,15 +81,17 @@ for m in range(M):
     u[m + 1, 0] = u_left
     u[m + 1, N] = u_right
 
-fig = plt.figure(facecolor='white')
-ax = plt.axes(xlim=(a, b), ylim=(-9, 6))
-line, = ax.plot([], [], lw=3)  # line = объект кривой
-ax.grid(True)
+plt.axis([0, 1, -600, 600])
+plt.plot(t, u[:]);
+plt.show()
 
+fig2 = plt.figure(facecolor='white')
+ax = plt.axes(xlim=(0, 1), ylim=(-500, 500))
+line, = ax.plot([], [], lw=3)
 
 def redraw(i):
-    line.set_data(t, u)
-
-
-anim = animation.FuncAnimation(fig, redraw, frames=100, interval=50)
+    x = t
+    y = u[:, i+1]
+    line.set_data(x, y)
+anim = animation.FuncAnimation(fig2, redraw, frames=126, interval=100)
 plt.show()
