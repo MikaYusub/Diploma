@@ -4,8 +4,8 @@ from numpy.linalg import inv
 import matplotlib.animation as animation
 
 eps = 0.1
-M = 100
-N = 50
+M = 50
+N = 100
 u_left = 0
 u_right = 0
 a = 0
@@ -15,26 +15,21 @@ t_0 = 0
 t = np.linspace(t_0, T, M + 1)
 x = np.linspace(a, b, N + 1)
 
-
 def tmp_f(x, t):
-    s = -eps * (1 - 2 * t) * np.sin(x) + 2 * np.sin(x) \
+    return -eps * (1 - 2 * t) * np.sin(x) + 2 * np.sin(x) \
            + ((1 - 2 * t) ** 2) * np.sin(x) * np.cos(x) - \
-           np.sin(3 * np.pi * x) * (1 - 2 * t) * np.sin(x)
-
-    return s
+           np.sin(3 * x) * (1 - 2 * t) * np.sin(x)
 
 def q(x):
     return np.sin(3 * x)
 
-
 def u_func(x, t):
     return (1 - 2 * t) * np.sin(x)
-
 
 def func(u, t):
     f = np.zeros((N - 1, 1), dtype='float64')
     f.itemset(0, (2 * eps / (x[2] - x[0])) * ((u[2] - u[1]) / (x[2] - x[1]) - (u[1] - u_left) / (x[1] - x[0])) + \
-              (u[1] * (u[2] - u_left)) / (x[2] - x[0]) - (u[1] * q(x[1])) - tmp_f(x[0], t)
+              (u[1] * (u[2] - u_left)) / (x[2] - x[0]) - (u[1] * q(x[1])) - tmp_f(x[1], t)
               )
     for n in range(1, N - 1):
         kk = 2 * eps / (x[n + 1] - x[n - 1])
@@ -74,25 +69,25 @@ y[0, :] = u[0, 1:N]
 for m in range(M):
     tmp = ((1 + 1j) * (t[m + 1] - t[m]) / 2)
     tmp1 = np.eye(N - 1) - tmp * (func_y(u[m, :]))
-    w_1 = np.dot(inv(tmp1), func(u[m, :], (t[m] + t[m + 1]) / 2))
-    tmp2 = (t[m + 1] - t[m]) * w_1.real
+    w_1 = np.dot(inv(tmp1), func(u[m, :], (t[m] + t[m + 1]) / 2)).real
+    tmp2 = (t[m + 1] - t[m]) * w_1
     y[m + 1] = y[m] + np.transpose(tmp2)
     u[m + 1, 0] = u_left
     u[m + 1, 1:N] = y[m + 1]
     u[m + 1, N] = u_right
 
-plt.axis([0, 1, -100, 100])
-plt.plot(t, u);
-plt.show()
+# plt.axis([0, 1, -100, 100])
+# plt.plot(t, u);
+# plt.show()
 
 fig2 = plt.figure(facecolor='white')
-ax = plt.axes(xlim=(0, 1), ylim=(-500, 500))
+ax = plt.axes(xlim=(0, np.pi), ylim=(-0.5, 1.5))
 line, = ax.plot([], [], lw=3)
 
-# def redraw(i):
-#     x = t[i]
-#     y = func(u[i, :],t[i])
-# #u[:, i+1]
-#     line.set_data(x, y)
-# anim = animation.FuncAnimation(fig2, redraw, frames=126, interval=100)
+def redraw(i):
+    line.set_data(x, u[i, :])
+anim = animation.FuncAnimation(fig2, redraw, frames=N, interval=100)
+plt.show()
+# plt.plot(x,u[20])
+# plt.axis([0, np.pi, -0.5, 1.5])
 # plt.show()

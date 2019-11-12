@@ -20,13 +20,12 @@ x = np.linspace(a, b, N + 1)
 for p in x:
     q.append(2 * p - 1 + 2 * np.sin(5 * np.pi * p) + 0.35)
 
-
 def u_init(x):
     return (x ** 2 - x - 2) - 6 * np.tanh((-3 * (x - 0.25)) / eps)
 
-
+# itemset vs '='
 def func(u):
-    f = np.zeros((N - 1, 1), dtype='float64')
+    f = np.zeros((N - 1, 1))
     f.itemset(0, (2 * eps / (x[2] - x[0])) * ((u[2] - u[1]) / (x[2] - x[1]) - (u[1] - u_left) / (x[1] - x[0])) + \
               (u[1] * (u[2] - u_left)) / (x[2] - x[0]) - (u[1] * q[1]))
     for n in range(1, N - 1):
@@ -42,7 +41,7 @@ def func(u):
 
 
 def func_y(u):
-    f_y = np.zeros((N - 1, N - 1), dtype='float64')
+    f_y = np.zeros((N - 1, N - 1))
     f_y.itemset((0, 0), -2 * (eps / (x[2] - x[0])) * (1 / (x[2] - x[1]) + 1 / (x[1] - x[0])) + \
                 (u[2] - u_left) / (x[2] - x[0]) - q[1])
     for n in range(1, N - 1):
@@ -67,15 +66,15 @@ for n in range(N + 1):
 y[0, :] = u[0, 1:N]
 
 for m in range(M):
-    tmp = ((1 + 1j) * (t[m + 1] - t[m]) / 2)
+    tmp = (((1 + 1j) / 2) * (t[m + 1] - t[m]))
     tmp1 = np.eye(N - 1) - tmp * (func_y(u[m, :]))
-    w_1 = np.matmul(inv(tmp1), func(u[m, :]))
-    tmp2 = (t[m + 1] - t[m]) * w_1.real
+    w_1 = np.matmul(inv(tmp1), func(u[m, :])).real
+    tmp2 = (t[m + 1] - t[m]) * w_1
     y[m + 1] = y[m] + np.transpose(tmp2)
     u[m + 1, 0] = u_left
     u[m + 1, 1:N] = y[m + 1, :]
     u[m + 1, N] = u_right
 
 plt.axis([a, b, -9, 6])
-plt.plot(t, u);
+plt.plot(x, u);
 plt.show()
