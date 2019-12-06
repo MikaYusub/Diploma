@@ -55,14 +55,17 @@ def func(y, t, x):
 
 def func_y(y):
     f_y = np.zeros((N - 1, N - 1), dtype='float64')
-    f_y.itemset((0, 0), -2 * eps / h ** 2 - (y[1] - u_left) / (2 * h) - q(x[1]))
+    f_y.itemset((0, 0), (-2 * eps / h ** 2)
+                - ((y[1] - u_left) / (2 * h)) - q(x[1]))
     for n in range(1, N - 1):
         f_y.itemset((n, n - 1), eps / h ** 2 + y[n] / (2 * h))
     for n in range(1, N - 2):
-        f_y.itemset((n, n), -2 * eps / h ** 2 - (y[n + 1] - y[n - 1]) / (2 * h) - q(x[n + 1]))
+        f_y.itemset((n, n), -2 * eps / h ** 2
+                    - ((y[n + 1] - y[n - 1]) / (2 * h)) - q(x[n + 1]))
     for n in range(0, N - 2):
         f_y.itemset((n, n + 1), eps / h ** 2 - y[n] / (2 * h))
-    f_y.itemset((-1, -1), -2 * eps / h ** 2 - (u_right - y[N - 3]) / (2 * h) - q(x[N - 1]))
+    f_y.itemset((-1, -1),
+                -2 * eps / h ** 2 - ((u_right - y[N - 3]) / (2 * h)) - q(x[N - 1]))
     return f_y
 
 
@@ -74,7 +77,7 @@ y[0, :] = u[0, 1:N]
 
 for m in range(M):
     tmp = ((1 + 1j) * (t[m + 1] - t[m]) / 2)
-    tmp1 = np.eye(N - 1) - tmp * (func_y(u[m, :]))
+    tmp1 = np.eye(N - 1) - tmp * (func_y(y[m, :]))
     w_1 = np.dot(inv(tmp1), func(y[m, :], (t[m] + t[m + 1]) / 2, x)).real
     tmp2 = (t[m + 1] - t[m]) * w_1
     y[m + 1] = y[m] + np.transpose(tmp2)
