@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 from numpy.linalg import inv
 import matplotlib.animation as animation
 
-eps = 0.1
+eps = 0.001
 M = 200
-N = 50
+N = 500
 u_left = 0
 u_right = 0
 a = 0
@@ -37,17 +37,18 @@ def func(y, t, x):
     f = np.zeros((N - 1, 1))
     f.itemset(0,
               (eps * (y[1] - 2 * y[0] + u_left) / h ** 2)
-              - (y[0] * (y[1] - u_left) / (2 * h))
+              + (y[0] * (y[1] - u_left) / (2 * h))
               - y[0] * q(x[1])
               - tmp_f(x[1], t))
     for n in range(1, N - 2):
-        f.itemset(n, (eps * (y[n + 1] - 2 * y[n] + y[n - 1]) / h ** 2)
-                  - (y[n] * (y[n + 1] - y[n-1]) / (2 * h))
+        f.itemset(n,
+                  (eps * (y[n + 1] - 2 * y[n] + y[n - 1]) / h ** 2)
+                  + (y[n] * (y[n + 1] - y[n-1]) / (2 * h))
                   - y[n] * q(x[n + 1])
                   - tmp_f(x[n + 1], t))
     f.itemset(N - 2,
               (eps * (u_right - 2 * y[N - 2] + y[N - 3]) / h ** 2)
-              - (y[N - 2] * (u_right - y[N - 3]) / (2 * h))
+              + (y[N - 2] * (u_right - y[N - 3]) / (2 * h))
               - y[N - 2] * q(x[N - 1])
               - tmp_f(x[N - 1], t))
     return f
@@ -55,17 +56,24 @@ def func(y, t, x):
 
 def func_y(y):
     f_y = np.zeros((N - 1, N - 1), dtype='float64')
-    f_y.itemset((0, 0), (-2 * eps / h ** 2)
-                - ((y[1] - u_left) / (2 * h)) - q(x[1]))
+    f_y.itemset((0, 0),
+                (-2 * eps / h ** 2)
+                + ((y[1] - u_left) / (2 * h))
+                - q(x[1]))
     for n in range(1, N - 1):
-        f_y.itemset((n, n - 1), eps / h ** 2 + y[n] / (2 * h))
+        f_y.itemset((n, n - 1),
+                    eps / h ** 2 - y[n] / (2 * h))
     for n in range(1, N - 2):
-        f_y.itemset((n, n), -2 * eps / h ** 2
-                    - ((y[n + 1] - y[n - 1]) / (2 * h)) - q(x[n + 1]))
+        f_y.itemset((n, n),
+                    -2 * eps / h ** 2
+                    + ((y[n + 1] - y[n - 1]) / (2 * h)) - q(x[n + 1]))
     for n in range(0, N - 2):
-        f_y.itemset((n, n + 1), eps / h ** 2 - y[n] / (2 * h))
+        f_y.itemset((n, n + 1),
+                    eps / h ** 2 + y[n] / (2 * h))
     f_y.itemset((-1, -1),
-                -2 * eps / h ** 2 - ((u_right - y[N - 3]) / (2 * h)) - q(x[N - 1]))
+                -2 * eps / h ** 2
+                + ((u_right - y[N - 3]) / (2 * h))
+                - q(x[N - 1]))
     return f_y
 
 
