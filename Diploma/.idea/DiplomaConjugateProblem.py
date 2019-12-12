@@ -4,8 +4,8 @@ from numpy.linalg import inv
 import matplotlib.animation as animation
 
 eps = 0.001
-M = 200
-N = 500
+M = 100
+N = 100
 u_left = 0
 u_right = 0
 a = 0
@@ -80,18 +80,19 @@ y = np.zeros((M + 1, N + 1))
 psi = np.zeros((M + 1, N - 1))
 for n in range(N + 1):
     y[0, n] = u_init(x[n])
-psi[0, :] = y[0, 1:N]
-
-for m in range(1,M):
+psi[M, :] = y[0, 1:N]
+print(y , psi)
+for m in range(M, 0,-1):
     tmp = ((1 + 1j) * (t[m - 1] - t[m]) / 2)
     tmp1 = np.eye(N - 1) - tmp * (func_y_psi(u, q))
     w_1 = np.dot(inv(tmp1), func_psi(psi[m, :],u, (t[m] + t[m - 1])/2,q)).real
     tmp2 = (t[m - 1] - t[m]) * w_1
     psi[m - 1] = psi[m] + np.transpose(tmp2)
-    y[m - 1, 0] = u_left
     y[m - 1, 1:N] = psi[m - 1]
-    y[m - 1, N] = u_right
+y[:, 0] = u_left
+y[:, N] = u_right
 
+# print(y)
 
 fig2 = plt.figure(facecolor='white')
 ax = plt.axes(xlim=(a, b), ylim=(-1.5, 1.5))
@@ -101,7 +102,7 @@ line2, = ax.plot([], [], lw=1, color='green')
 
 def animate(i):
     line.set_xdata(x)
-    line.set_ydata(y[i, :])
+    line.set_ydata(y[-i, :])
     line2.set_xdata(x)
     line2.set_ydata(u_model(x,t[i]))
     return line,line2
