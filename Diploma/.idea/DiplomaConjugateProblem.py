@@ -15,7 +15,6 @@ t_0 = 0.
 h = (b - a) / N
 t = np.linspace(t_0, T, M + 1)
 x = np.linspace(a, b, N + 1)
-u = []
 q = []
 
 
@@ -35,16 +34,17 @@ for n in range(0, N + 1):
     q.append(q_init(x[n]))
 
 
-def u_init(x):
-    return x
-
-
-for n in range(N + 1):
-    u.append(u_init(n))
+u = np.zeros((M+1,N+1))
+for m in range(M+1):
+    for n in range(N+1):
+        u[m,n] = x[n]*np.exp(-x[n]*t[m])
 
 
 def u_model(x, t):
     return x * np.exp(-x * t)
+
+def psi_model(x):
+    return - np.sin(x)
 
 
 def func_psi(psi, u, t,q):
@@ -79,20 +79,19 @@ def func_y_psi(u, q):
 y = np.zeros((M + 1, N + 1))
 psi = np.zeros((M + 1, N - 1))
 for n in range(N + 1):
-    y[0, n] = u_init(x[n])
-psi[M, :] = y[0, 1:N]
+    y[M, n] = psi_model(x[n])
+psi[M, :] = y[M, 1:N]
 print(y , psi)
 for m in range(M, 0,-1):
     tmp = ((1 + 1j) * (t[m - 1] - t[m]) / 2)
-    tmp1 = np.eye(N - 1) - tmp * (func_y_psi(u, q))
-    w_1 = np.dot(inv(tmp1), func_psi(psi[m, :],u, (t[m] + t[m - 1])/2,q)).real
+    tmp1 = np.eye(N - 1) - tmp * (func_y_psi(u[m,:], q))
+    w_1 = np.dot(inv(tmp1), func_psi(psi[m, :],u[m,:], (t[m] + t[m - 1])/2,q)).real
     tmp2 = (t[m - 1] - t[m]) * w_1
-    psi[m - 1] = psi[m] + np.transpose(tmp2)
-    y[m - 1, 1:N] = psi[m - 1]
+    psi[m - 1,:] = psi[m,:] + np.transpose(tmp2)
+    y[m - 1, 1:N] = psi[m - 1,:]
 y[:, 0] = u_left
 y[:, N] = u_right
-
-# print(y)
+print(y,psi)
 
 fig2 = plt.figure(facecolor='white')
 ax = plt.axes(xlim=(a, b), ylim=(-1.5, 1.5))
