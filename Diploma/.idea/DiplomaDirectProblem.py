@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.linalg import inv
 import matplotlib.animation as animation
+plt.rcParams['animation.ffmpeg_path'] = r'C:\FFmpeg\bin\ffmpeg'
 
 eps = 0.03
 M = 200
@@ -112,7 +113,10 @@ def direct_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h):
         line2.set_xdata(x)
         line2.set_ydata(u_init(x))
         return line, line2
-    anim = animation.FuncAnimation(fig2, animate, frames=M + 1, interval=50)
+
+    anim = animation.FuncAnimation(fig2, animate, frames=M + 1, interval=50, blit= True)
+    FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
+    anim.save(r'C:\Users\FS\Desktop\Main Mission\Direct_problem_solution.mp4', writer=FFwriter)
     plt.show()
 
 direct_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h)

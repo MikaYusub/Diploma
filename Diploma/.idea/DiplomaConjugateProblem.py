@@ -91,7 +91,7 @@ for m in range(M, 0,-1):
     y[m - 1, 1:N] = psi[m - 1,:]
 y[:, 0] = u_left
 y[:, N] = u_right
-print(y,psi)
+
 
 fig2 = plt.figure(facecolor='white')
 ax = plt.axes(xlim=(a, b), ylim=(-1.5, 1.5))
@@ -106,5 +106,5 @@ def animate(i):
     line2.set_ydata(u_model(x,t[i]))
     return line,line2
 
-anim = animation.FuncAnimation(fig2, animate, frames=N+M, interval=50)
+anim = animation.FuncAnimation(fig2, animate, frames=1+M, interval=50)
 plt.show()
