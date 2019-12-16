@@ -1,13 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from numpy.linalg import inv,solve;
+from numpy.linalg import inv,solve
 import matplotlib.animation as animation
+import time
 
+start_time = time.time()
 plt.rcParams['animation.ffmpeg_path'] = r'C:\FFmpeg\bin\ffmpeg'
 
 eps = 0.03
-M = 200
-N = 500
+M = 100
+N = 150
 u_left = -8
 u_right = 4
 a = 0
@@ -112,5 +114,77 @@ def direct_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h):
     FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
     anim.save(r'C:\Users\FS\Desktop\Main Mission\Direct_problem_solution.mp4', writer=FFwriter)
     plt.show()
+u = direct_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h)
+def conjucate_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h,u):
+    def psi_model(x,t):
+        return (1 - 2 * t) * np.sin(x)
 
-direct_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h)
+
+    def func_psi(psi, u, t,q):
+        f = np.zeros((N - 1, 1))
+        f.itemset(0,
+              (-eps * (psi[1] - 2 * psi[0]) / h ** 2)
+              + (u[0] * psi[1] / (2 * h))
+              + psi[0] * q[1]
+              # + tmp_f(x[1],t)
+              )
+        for n in range(1, N - 2):
+            f.itemset(n,
+                  (-eps * (psi[n + 1] - 2 * psi[n] + psi[n - 1]) / h ** 2)
+                  + (u[n] * (psi[n + 1] - psi[n - 1]) / (2 * h))
+                  + psi[n] * q[n + 1]
+                  # + tmp_f(x[n+1],t)
+                  )
+        f.itemset(N - 2,
+              (-eps * (-2 * psi[N - 2] + psi[N - 3]) / h ** 2)
+              - (u[N - 2] * psi[N - 3] / (2 * h))
+              + psi[N - 2] * q[N - 1]
+              # + tmp_f(x[N - 1], t)
+              )
+        return f
+
+    def func_y_psi(u, q):
+        f_y = np.zeros((N - 1, N - 1), dtype='float64')
+        for n in range(1, N - 1):
+            f_y.itemset((n, n - 1), -eps / h ** 2 - u[n] / (2 * h))
+        for n in range(0, N - 1):
+            f_y.itemset((n, n), 2 * eps / h ** 2 + q[n])
+        for n in range(0, N - 2):
+            f_y.itemset((n, n + 1), -eps / h ** 2 + u[n] / (2 * h))
+        return f_y
+
+    y = np.zeros((M + 1, N + 1))
+    psi = np.zeros((M + 1, N - 1))
+    for n in range(N + 1):
+        y[M, n] = psi_model(x[n],1)
+    psi[M, :] = y[M, 1:N]
+    print(y , psi)
+    for m in range(M, 0,-1):
+        tmp = ((1 + 1j) * (t[m - 1] - t[m]) / 2)
+        tmp1 = np.eye(N - 1) - tmp * (func_y_psi(u[m,:], q))
+        w_1 = np.dot(inv(tmp1), func_psi(psi[m, :],u[m,:], (t[m] + t[m - 1])/2,q)).real
+        tmp2 = (t[m - 1] - t[m]) * w_1
+        psi[m - 1,:] = psi[m,:] + np.transpose(tmp2)
+        y[m - 1, 1:N] = psi[m - 1,:]
+    y[:, 0] = u_left
+    y[:, N] = u_right
+
+    fig2 = plt.figure(facecolor='white')
+    ax = plt.axes(xlim=(a, b), ylim=(-1.5, 1.5))
+    line, = ax.plot([], [], lw=1, color='red')
+    line2, = ax.plot([], [], lw=1, color='green')
+
+    def animate(i):
+        line.set_xdata(x)
+        line.set_ydata(y[i, :])
+        # line2.set_xdata(x)
+        # line2.set_ydata(psi_model(x,t[i]))
+        return line
+            # ,line2
+
+    anim = animation.FuncAnimation(fig2, animate, frames=1+M, interval=50)
+    FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
+    anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
+    plt.show()
+conjucate_problem(eps,M,N,a,b,0,0,T,t_0,t,x,q,h,u)
+print("--- %s seconds ---" % (time.time() - start_time))

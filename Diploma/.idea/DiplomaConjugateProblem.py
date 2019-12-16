@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 from numpy.linalg import inv
 import matplotlib.animation as animation
 
-eps = 0.001
-M = 100
+
+eps = 0.01
+M = 200
 N = 100
 u_left = 0
 u_right = 0
@@ -21,13 +22,13 @@ q = []
 def tmp_f(x, t):
     tmp_var = -eps * (1 - 2 * t) * np.sin(x) \
               - 2 * np.sin(x) \
-              - np.exp(-x * t) * (1 - 2 * t) * np.cos(x) \
+              - x*np.exp(-x * t) * (1 - 2 * t) * np.cos(x) \
               - 2 * np.cos(x) * (1 - 2 * t) * np.sin(x)
     return tmp_var
 
 
 def q_init(x):
-    return 2 * np.cos(x)
+    return 2*x - 1 + 2*np.sin(5* np.pi*x) + 0.35
 
 
 for n in range(0, N + 1):
@@ -40,11 +41,8 @@ for m in range(M+1):
         u[m,n] = x[n]*np.exp(-x[n]*t[m])
 
 
-def u_model(x, t):
-    return x * np.exp(-x * t)
-
-def psi_model(x):
-    return - np.sin(x)
+def psi_model(x,t):
+    return (1 - 2 * t) * np.sin(x)
 
 
 def func_psi(psi, u, t,q):
@@ -53,18 +51,22 @@ def func_psi(psi, u, t,q):
               (-eps * (psi[1] - 2 * psi[0]) / h ** 2)
               + (u[0] * psi[1] / (2 * h))
               + psi[0] * q[1]
+              # + tmp_f(x[1],t)
               )
     for n in range(1, N - 2):
         f.itemset(n,
                   (-eps * (psi[n + 1] - 2 * psi[n] + psi[n - 1]) / h ** 2)
                   + (u[n] * (psi[n + 1] - psi[n - 1]) / (2 * h))
-                  + psi[n] * q[n + 1])
+                  + psi[n] * q[n + 1]
+                  # + tmp_f(x[n+1],t)
+                  )
     f.itemset(N - 2,
               (-eps * (-2 * psi[N - 2] + psi[N - 3]) / h ** 2)
               - (u[N - 2] * psi[N - 3] / (2 * h))
-              + psi[N - 2] * q[N - 1])
+              + psi[N - 2] * q[N - 1]
+              # + tmp_f(x[N - 1], t)
+              )
     return f
-
 
 def func_y_psi(u, q):
     f_y = np.zeros((N - 1, N - 1), dtype='float64')
@@ -79,7 +81,7 @@ def func_y_psi(u, q):
 y = np.zeros((M + 1, N + 1))
 psi = np.zeros((M + 1, N - 1))
 for n in range(N + 1):
-    y[M, n] = psi_model(x[n])
+    y[M, n] = psi_model(x[n],1)
 psi[M, :] = y[M, 1:N]
 print(y , psi)
 for m in range(M, 0,-1):
@@ -101,9 +103,9 @@ line2, = ax.plot([], [], lw=1, color='green')
 
 def animate(i):
     line.set_xdata(x)
-    line.set_ydata(y[-i, :])
+    line.set_ydata(y[i, :])
     line2.set_xdata(x)
-    line2.set_ydata(u_model(x,t[i]))
+    line2.set_ydata(psi_model(x,t[i]))
     return line,line2
 
 anim = animation.FuncAnimation(fig2, animate, frames=1+M, interval=50)
