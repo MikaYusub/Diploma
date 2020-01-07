@@ -115,5 +115,5 @@ def animate(i):
     return line, line2
 
 
-anim = animation.FuncAnimation(fig2, animate, frames=N + M, interval=50)
+anim = animation.FuncAnimation(fig2, animate, frames=N + 1, interval=50)
 plt.show()

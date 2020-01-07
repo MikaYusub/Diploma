@@ -9,8 +9,8 @@ start_time = time.time()
 plt.rcParams['animation.ffmpeg_path'] = r'C:\FFmpeg\bin\ffmpeg'
 
 eps = 0.03
-M = 100
-N = 150
+M = 10
+N = 20
 u_left = -8
 u_right = 4
 a = 0
@@ -21,13 +21,17 @@ h = (b - a) / N
 tau = (T - t_0) / M
 t = np.linspace(t_0, T, M + 1)
 x = np.linspace(a, b, N + 1)
-q = [];
+init_q = []
+q = np.zeros(N)
+beta = 100
+
+s = 100 #Количество итераций
 
 def q_init(x):
-    return 2*x - 1 +2*np.sin(5*x*np.pi)+0.35
-
+    return np.sin(3*x*np.pi)
+        #2*x - 1 +2*np.sin(5*x*np.pi)+0.35
 for n in range(0, N + 1):
-    q.append(q_init(x[n]))
+    init_q.append(q_init(x[n]))
 
 def u_init(x):
     return (x**2 - x - 2) \
@@ -41,20 +45,17 @@ def direct_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h):
                   (eps * (y[1] - 2 * y[0] + u_left) / h ** 2)
                   + (y[0] * (y[1] - u_left) / (2 * h))
                   - y[0] * q[1]
-                  # - tmp_f(x[1], t)
                   )
         for n in range(1, N - 2):
             f.itemset(n,
                       (eps * (y[n + 1] - 2 * y[n] + y[n - 1]) / h ** 2)
                       + (y[n] * (y[n + 1] - y[n - 1]) / (2 * h))
                       - y[n] * q[n + 1]
-                      # - tmp_f(x[n + 1], t)
                       )
         f.itemset(N - 2,
                   (eps * (u_right - 2 * y[N - 2] + y[N - 3]) / h ** 2)
                   + (y[N - 2] * (u_right - y[N - 3]) / (2 * h))
                   - y[N - 2] * q[N - 1]
-                  # - tmp_f(x[N - 1], t)
                   )
         return f
 
@@ -114,12 +115,9 @@ def direct_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h):
     FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
     anim.save(r'C:\Users\FS\Desktop\Main Mission\Direct_problem_solution.mp4', writer=FFwriter)
     plt.show()
-def conjucate_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h,u):
+def conjucate_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h,u,f_obs):
 
-    def f_obs(u):
-        return u[:,T]
-
-    def func_psi(psi, u, t,q):
+    def func_psi(psi,u,t,q):
         f = np.zeros((N - 1, 1))
         f.itemset(0,
                   (-eps * (psi[1] - 2 * psi[0]) / h ** 2)
@@ -152,7 +150,7 @@ def conjucate_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h,u):
     y = np.zeros((M + 1, N + 1))
     psi = np.zeros((M + 1, N - 1))
     for n in range(N + 1):
-        y[M, n] = -2*(f_obs())///////////////
+        y[M, n] = -2*(u[:,-1] - f_obs)
     psi[M, :] = y[M, 1:N]
     print(y , psi)
     for m in range(M, 0,-1):
@@ -181,18 +179,20 @@ def conjucate_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h,u):
     FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
     anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
     plt.show()
+tmp = direct_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, init_q, h)
+f_obs = tmp[:,-1]
 
-for i in range(10):## while -> condition
-    u = direct_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, q, h)
-    psi = conjucate_problem(eps, M, N, a, b, 0, 0, T, t_0, t, x, q, h, u)
+for i in range(s):## while -> condition
+
+    u = direct_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, q[i,:], h)
+    psi = conjucate_problem(eps, M, N, a, b, 0, 0, T, t_0, t, x, q[i,:], h, u, f_obs)
     Integral = trapz_integrate(u,psi)
-    print(I)
+    q[i+1] = q[i] - beta*Integral
 
 
 def trapz_integrate(u,psi):
     for m in range(1,M+1):
         for n in range (1,N):
             return (u[m,n]*psi[m,n] + u[m-1,n]*psi[m-1,n])*tau/2
-
 
 print("--- %s seconds ---" % (time.time() - start_time))
