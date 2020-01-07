@@ -9,8 +9,8 @@ start_time = time.time()
 plt.rcParams['animation.ffmpeg_path'] = r'C:\FFmpeg\bin\ffmpeg'
 
 eps = 0.03
-M = 10
-N = 20
+M = 100
+N = 200
 u_left = -8
 u_right = 4
 a = 0
@@ -22,10 +22,11 @@ tau = (T - t_0) / M
 t = np.linspace(t_0, T, M + 1)
 x = np.linspace(a, b, N + 1)
 init_q = []
-q = np.zeros(N)
+S = 100 #Количество итераций
+q = np.zeros((S,N+1))
+J = np.zeros(S)
 beta = 100
 
-s = 100 #Количество итераций
 
 def q_init(x):
     return np.sin(3*x*np.pi)
@@ -38,6 +39,7 @@ def u_init(x):
            - 6* np.tanh((-3*x + 0.75)/eps)
 
 def direct_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h):
+
 
     def func(y,t,x,q):
         f = np.zeros((N - 1, 1))
@@ -95,26 +97,10 @@ def direct_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h):
         tmp2 = (t[m + 1] - t[m]) * w_1.real
         y[m + 1] = y[m] + np.transpose(tmp2)
         u[m + 1, 1:N] = y[m + 1]
-    u[m + 1, 0] = u_left
-    u[m + 1, N] = u_right
+        u[m + 1, 0] = u_left
+        u[m + 1, N] = u_right
     return u
 
-    fig2 = plt.figure(facecolor='white')
-    ax = plt.axes(xlim=(a, b), ylim=(-9, 5))
-    line, = ax.plot([], [], lw=1, color='red')
-    line2, = ax.plot([], [], lw=1, color='green')
-
-    def animate(i):
-        line.set_xdata(x)
-        line.set_ydata(u[i, :])
-        line2.set_xdata(x)
-        line2.set_ydata(u_init(x))
-        return line, line2
-
-    anim = animation.FuncAnimation(fig2, animate, frames=M + 1, interval=50, blit= True)
-    FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
-    anim.save(r'C:\Users\FS\Desktop\Main Mission\Direct_problem_solution.mp4', writer=FFwriter)
-    plt.show()
 def conjucate_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h,u,f_obs):
 
     def func_psi(psi,u,t,q):
@@ -150,7 +136,7 @@ def conjucate_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h,u,f_obs):
     y = np.zeros((M + 1, N + 1))
     psi = np.zeros((M + 1, N - 1))
     for n in range(N + 1):
-        y[M, n] = -2*(u[:,-1] - f_obs)
+        y[M, n] = -2*(u[M,:] - f_obs[n])///////////
     psi[M, :] = y[M, 1:N]
     print(y , psi)
     for m in range(M, 0,-1):
@@ -161,38 +147,71 @@ def conjucate_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h,u,f_obs):
         tmp2 = (t[m - 1] - t[m]) * w_1.real
         psi[m - 1,:] = psi[m,:] + np.transpose(tmp2)
         y[m - 1, 1:N] = psi[m - 1,:]
-    y[:, 0] = u_left
-    y[:, N] = u_right
+        y[:, 0] = u_left
+        y[:, N] = u_right
+
     return psi
+    #
+    # fig2 = plt.figure(facecolor='white')
+    # ax = plt.axes(xlim=(a, b), ylim=(-1.5, 1.5))
+    # line, = ax.plot([], [], lw=1, color='red')
+    # # line2, = ax.plot([], [], lw=1, color='green')
+    #
+    # def animate(i):
+    #     line.set_xdata(x)
+    #     line.set_ydata(y[i, :])
+    #     return line
+    #
+    # anim = animation.FuncAnimation(fig2, animate, frames=1+M, interval=50)
+    # FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
+    # anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
+    # plt.show()
 
-    fig2 = plt.figure(facecolor='white')
-    ax = plt.axes(xlim=(a, b), ylim=(-1.5, 1.5))
-    line, = ax.plot([], [], lw=1, color='red')
-    # line2, = ax.plot([], [], lw=1, color='green')
-
-    def animate(i):
-        line.set_xdata(x)
-        line.set_ydata(y[i, :])
-        return line
-
-    anim = animation.FuncAnimation(fig2, animate, frames=1+M, interval=50)
-    FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
-    anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
-    plt.show()
 tmp = direct_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, init_q, h)
-f_obs = tmp[:,-1]
 
-for i in range(s):## while -> condition
+# fig2 = plt.figure(facecolor='white')
+# ax = plt.axes(xlim=(a, b), ylim=(-9, 5))
+# line, = ax.plot([], [], lw=1, color='red')
+# line2, = ax.plot([], [], lw=1, color='green')
+#
+# def animate(i):
+#     line.set_xdata(x)
+#     line.set_ydata(tmp[i, :])
+#     line2.set_xdata(x)
+#     line2.set_ydata(u_init(x))
+#     return line, line2
+#
+# anim = animation.FuncAnimation(fig2, animate, interval=50, blit= True)
+# FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
+# anim.save(r'C:\Users\FS\Desktop\Main Mission\Direct_problem_solution.mp4', writer=FFwriter)
+# plt.show()
 
-    u = direct_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, q[i,:], h)
-    psi = conjucate_problem(eps, M, N, a, b, 0, 0, T, t_0, t, x, q[i,:], h, u, f_obs)
-    Integral = trapz_integrate(u,psi)
-    q[i+1] = q[i] - beta*Integral
+f_obs = tmp[M,:]
+
+#q[0,:]=
 
 
-def trapz_integrate(u,psi):
+def gradient_calculation(u,psi,tau,M,N):
+    res = 0
     for m in range(1,M+1):
         for n in range (1,N):
-            return (u[m,n]*psi[m,n] + u[m-1,n]*psi[m-1,n])*tau/2
+            res += (u[m,n]*psi[m,n] + u[m-1,n]*psi[m-1,n])*tau/2
+
+    return res
+
+def functional_calculation(u,f_obs,h,N):
+    res = 0
+    for n in range(1, N):
+        res += ((u[n] - f_obs[n])**2 + (u[n-1] - f_obs[n-1])**2)*h/2
+    return res
+
+for s in range(S):## while -> condition
+
+    u = direct_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, q[s,:], h)
+    J[s] = functional_calculation(u[M,:],f_obs,h,N)
+    psi = conjucate_problem(eps, M, N, a, b, 0, 0, T, t_0, t, x, q[s,:], h, u, f_obs)
+    dJ = gradient_calculation(u,psi,tau,M,N)
+    q[s + 1,:] = q[s,:] - beta*dJ
+
 
 print("--- %s seconds ---" % (time.time() - start_time))
