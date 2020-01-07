@@ -145,6 +145,7 @@ def conjucate_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h,u,f_obs):
         # w_1 = np.dot(inv(tmp1), func_psi(psi[m, :],u[m,:], (t[m] + t[m - 1])/2,q)).real
         w_1 = solve(tmp1,func_psi(psi[m, :], u[m,:],(t[m] + t[m - 1]) / 2, q))
         tmp2 = (t[m - 1] - t[m]) * w_1.real
+
         psi[m - 1,:] = psi[m,:] + np.transpose(tmp2)
         y[m - 1, 1:N] = psi[m - 1,:]
         y[:, 0] = u_left
