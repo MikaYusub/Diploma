@@ -136,7 +136,7 @@ def conjucate_problem(eps,M,N,a,b,u_left,u_right,T,t_0,t,x,q,h,u,f_obs):
     y = np.zeros((M + 1, N + 1))
     psi = np.zeros((M + 1, N - 1))
     for n in range(N + 1):
-        y[M, n] = -2*(u[M,:] - f_obs[n])///////////
+        y[M, n] = -2*(u[M,:] - f_obs[n])
     psi[M, :] = y[M, 1:N]
     print(y , psi)
     for m in range(M, 0,-1):
