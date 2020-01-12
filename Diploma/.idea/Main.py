@@ -25,11 +25,11 @@ S = 20  # Количество итераций
 ss = np.linspace(0,S-2,S-1)
 q = np.zeros((S, N + 1))
 J = np.zeros(S)
-beta = 10
+beta = 25
 
 def q_init(x):
-    return 2 * x - 1 + 2 * np.sin(5 * x * np.pi) + 0.35
-    # np.sin(3*x*np.pi)
+     #2 * x - 1 + 2 * np.sin(5 * x * np.pi) + 0.35
+     return np.sin(3*x*np.pi)
 
 
 for n in range(0, N + 1):
@@ -103,24 +103,24 @@ def direct_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, q, h):
     return u
 
 
-def conjucate_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, q, h, u, f_obs):
-    def func_psi(psi, u, t, q):
+def conjucate_problem(eps, M, N, a, b, T, t_0, t, x, q, h, u, f_obs):
+    def func_psi(y, u, t, q):
         f = np.zeros((N - 1, 1))
         f.itemset(0,
-                  (-eps * (psi[1] - 2 * psi[0]) / h ** 2)
-                  + (u[0] * psi[1] / (2 * h))
-                  + psi[0] * q[1]
+                  (-eps * (y[1] - 2 * y[0]) / h ** 2)
+                  + (u[1] * y[1] / (2 * h))
+                  + y[0] * q[1]
                   )
         for n in range(1, N - 2):
             f.itemset(n,
-                      (-eps * (psi[n + 1] - 2 * psi[n] + psi[n - 1]) / h ** 2)
-                      + (u[n] * (psi[n + 1] - psi[n - 1]) / (2 * h))
-                      + psi[n] * q[n + 1]
+                      (-eps * (y[n + 1] - 2 * y[n] + y[n - 1]) / h ** 2)
+                      + (u[n+1] * (y[n + 1] - y[n - 1]) / (2 * h))
+                      + y[n] * q[n+1]
                       )
         f.itemset(N - 2,
-                  (-eps * (-2 * psi[N - 2] + psi[N - 3]) / h ** 2)
-                  - (u[N - 2] * psi[N - 3] / (2 * h))
-                  + psi[N - 2] * q[N - 1]
+                  (-eps * (-2 * y[N - 2] + y[N - 3]) / h ** 2)
+                  - (u[N - 1] * y[N - 3] / (2 * h))
+                  + y[N - 2] * q[N - 1]
                   )
         return f
 
@@ -131,30 +131,30 @@ def conjucate_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, q, h, u, f
         for n in range(0, N - 1):
             f_y.itemset((n, n), 2 * eps / h ** 2 + q[n])
         for n in range(0, N - 2):
-            f_y.itemset((n, n + 1), -eps / h ** 2 + u[n] / (2 * h))
+            f_y.itemset((n, n + 1), (-eps / h ** 2) + (u[n] / (2 * h)))
         return f_y
 
-    y = np.zeros((M + 1, N + 1))
-    psi = np.zeros((M + 1, N - 1))
+    psi = np.zeros((M + 1, N + 1))
+    y = np.zeros((M + 1, N - 1))
 
-    y[M, :] = -2 * (u[M, :] - f_obs)
-    psi[M, :] = y[M, 1:N]
+    psi[M, :] = -2 * (u[M, :] - f_obs)
+    y[M, :] = psi[M, 1:N]
     for m in range(M, 0, -1):
         tmp = ((1 + 1j) * (t[m - 1] - t[m]) / 2)
         tmp1 = np.eye(N - 1) - tmp * (func_y_psi(u[m, :], q))
-        w_1 = solve(tmp1, func_psi(psi[m, :], u[m, :], (t[m] + t[m - 1]) / 2, q))
+        w_1 = solve(tmp1, func_psi(y[m, :], u[m, :], (t[m] + t[m - 1]) / 2, q))
         tmp2 = (t[m - 1] - t[m]) * w_1.real
-        psi[m - 1, :] = psi[m, :] + np.transpose(tmp2)
-        y[m - 1, 1:N] = psi[m - 1, :]
-        y[:, 0] = u_left
-        y[:, N] = u_right
+        y[m - 1, :] = y[m, :] + np.transpose(tmp2)
+        psi[m - 1, 1:N] = y[m - 1, :]
+        psi[:, 0] = 0
+        psi[:, N] = 0
 
     return psi
 
 
 def gradient_calculation(u, psi, tau, M, N):
     res = np.zeros(N+1)
-    for n in range(1,N-1):
+    for n in range(N+1):
         for m in range(1, M + 1):
             res[n] = (u[m, n] * psi[m, n] + u[m - 1, n] * psi[m - 1, n]) * tau / 2
     return res
@@ -169,48 +169,51 @@ def functional_calculation(u, f_obs, h, N):
 
 tmp = direct_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, init_q, h)
 
-
 f_obs = tmp[M, :]
 # q[0,:]=
 for s in range(S-1):  ## while -> condition
     print(s)
     u = direct_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, q[s, :], h)
     J[s] = functional_calculation(u[M, :], f_obs, h, N)
-    psi = conjucate_problem(eps, M, N, a, b, 0, 0, T, t_0, t, x, q[s, :], h, u, f_obs)
+    psi = conjucate_problem(eps, M, N, a, b, T, t_0, t, x, q[s, :], h, u, f_obs)
     dJ = gradient_calculation(u, psi, tau, M, N)
     q[s + 1, :] = q[s, :] - beta * dJ
 
 fig2 = plt.figure(facecolor='white')
-ax = plt.axes(xlim=(a, b), ylim=(u_left, u_right))
+# ax = plt.axes(xlim=(a, b), ylim=(u_left, u_right))
+
+# def animate(i):
+#     line.set_xdata(x)
+#     line.set_ydata(u[i,:])
+#     line2.set_xdata(x)
+#     line2.set_ydata(u_init(x))
+#     return line,line2
+#
+# anim = animation.FuncAnimation(fig2, animate, frames=1+M, interval=50)
+# # FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
+# # anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
+# plt.show()
+#
+ax = plt.axes(xlim=(0, 1), ylim=(-2, 2))
 line, = ax.plot([], [], lw=1, color='red')
 line2, = ax.plot([], [], lw=1, color='green')
 
 def animate(i):
     line.set_xdata(x)
-    line.set_ydata(u[i,:])
-    line2.set_xdata(x)
-    line2.set_ydata(u_init(x))
-    return line,line2
-
-anim = animation.FuncAnimation(fig2, animate, frames=1+M, interval=50)
-# FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
-# anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
-plt.show()
-
-ax = plt.axes(xlim=(0, s), ylim=(-40, 40))
-
-def animate(i):
-    line.set_xdata(ss)
     line.set_ydata(q[i,:])
+    line2.set_xdata(x)
+    line2.set_ydata(q_init(x))
     return line
 
-anim = animation.FuncAnimation(fig2, animate, frames=1+M, interval=50)
+anim = animation.FuncAnimation(fig2, animate)
 # FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
 # anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
 plt.show()
 
-plt.plot(J)
-plt.show()
+# plt.plot(J[0:S-1])
+# plt.xlim((0,S-2))
+# plt.ylim((0,0.15))
+# plt.show()
 
 
 
