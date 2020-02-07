@@ -21,7 +21,7 @@ tau = (T - t_0) / M
 t = np.linspace(t_0, T, M + 1)
 x = np.linspace(a, b, N + 1)
 init_q = []
-S = 20  # Количество итераций
+S = 100  # Количество итераций
 ss = np.linspace(0,S-2,S-1)
 q = np.zeros((S, N + 1))
 J = np.zeros(S)
@@ -127,11 +127,11 @@ def conjucate_problem(eps, M, N, a, b, T, t_0, t, x, q, h, u, f_obs):
     def func_y_psi(u, q):
         f_y = np.zeros((N - 1, N - 1), dtype='float64')
         for n in range(1, N - 1):
-            f_y.itemset((n, n - 1), -eps / h ** 2 - u[n] / (2 * h))
+            f_y.itemset((n, n - 1), -eps / h ** 2 - u[n+1] / (2 * h))
         for n in range(0, N - 1):
-            f_y.itemset((n, n), 2 * eps / h ** 2 + q[n])
+            f_y.itemset((n, n), 2 * eps / h ** 2 + q[n+1])
         for n in range(0, N - 2):
-            f_y.itemset((n, n + 1), (-eps / h ** 2) + (u[n] / (2 * h)))
+            f_y.itemset((n, n + 1), (-eps / h ** 2) + (u[n+1] / (2 * h)))
         return f_y
 
     psi = np.zeros((M + 1, N + 1))
@@ -179,9 +179,8 @@ for s in range(S-1):  ## while -> condition
     dJ = gradient_calculation(u, psi, tau, M, N)
     q[s + 1, :] = q[s, :] - beta * dJ
 
-fig2 = plt.figure(facecolor='white')
-# ax = plt.axes(xlim=(a, b), ylim=(u_left, u_right))
 
+# ax = plt.axes(xlim=(a, b), ylim=(u_left, u_right))
 # def animate(i):
 #     line.set_xdata(x)
 #     line.set_ydata(u[i,:])
@@ -193,7 +192,7 @@ fig2 = plt.figure(facecolor='white')
 # # FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
 # # anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
 # plt.show()
-#
+fig2 = plt.figure(facecolor='white')
 ax = plt.axes(xlim=(0, 1), ylim=(-2, 2))
 line, = ax.plot([], [], lw=1, color='red')
 line2, = ax.plot([], [], lw=1, color='green')
@@ -210,11 +209,9 @@ anim = animation.FuncAnimation(fig2, animate)
 # anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
 plt.show()
 
-# plt.plot(J[0:S-1])
-# plt.xlim((0,S-2))
-# plt.ylim((0,0.15))
-# plt.show()
-
-
+plt.plot(J[0:S-1])
+plt.xlim((0,S-2))
+plt.ylim((0,0.35))
+plt.show()
 
 print("--- %s seconds ---" % (time.time() - start_time))
