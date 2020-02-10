@@ -21,7 +21,7 @@ tau = (T - t_0) / M
 t = np.linspace(t_0, T, M + 1)
 x = np.linspace(a, b, N + 1)
 init_q = []
-S = 100  # Количество итераций
+S = 50  # Количество итераций
 ss = np.linspace(0,S-2,S-1)
 q = np.zeros((S, N + 1))
 J = np.zeros(S)
@@ -41,7 +41,7 @@ def u_init(x):
            - 6 * np.tanh((-3 * x + 0.75) / eps)
 
 
-def direct_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, q, h):
+def direct_problem(eps, M, N, u_left, u_right, t, x, q, h):
     def func(y, t, x, q):
         f = np.zeros((N - 1, 1))
         f.itemset(0,
@@ -103,7 +103,7 @@ def direct_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, q, h):
     return u
 
 
-def conjucate_problem(eps, M, N, a, b, T, t_0, t, x, q, h, u, f_obs):
+def conjucate_problem(eps, M, N, t, x, q, h, u, f_obs):
     def func_psi(y, u, t, q):
         f = np.zeros((N - 1, 1))
         f.itemset(0,
@@ -156,7 +156,7 @@ def gradient_calculation(u, psi, tau, M, N):
     res = np.zeros(N+1)
     for n in range(N+1):
         for m in range(1, M + 1):
-            res[n] = (u[m, n] * psi[m, n] + u[m - 1, n] * psi[m - 1, n]) * tau / 2
+            res[n] += (u[m, n] * psi[m, n] + u[m - 1, n] * psi[m - 1, n]) * tau / 2
     return res
 
 
@@ -167,15 +167,15 @@ def functional_calculation(u, f_obs, h, N):
     return res
 
 
-tmp = direct_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, init_q, h)
+tmp = direct_problem(eps, M, N, u_left, u_right, t, x, init_q, h)
 
 f_obs = tmp[M, :]
 # q[0,:]=
 for s in range(S-1):  ## while -> condition
     print(s)
-    u = direct_problem(eps, M, N, a, b, u_left, u_right, T, t_0, t, x, q[s, :], h)
+    u = direct_problem(eps, M, N, u_left, u_right, t, x, q[s, :], h)
     J[s] = functional_calculation(u[M, :], f_obs, h, N)
-    psi = conjucate_problem(eps, M, N, a, b, T, t_0, t, x, q[s, :], h, u, f_obs)
+    psi = conjucate_problem(eps, M, N, t, x, q[s, :], h, u, f_obs)
     dJ = gradient_calculation(u, psi, tau, M, N)
     q[s + 1, :] = q[s, :] - beta * dJ
 
@@ -209,9 +209,9 @@ anim = animation.FuncAnimation(fig2, animate)
 # anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
 plt.show()
 
-plt.plot(J[0:S-1])
 plt.xlim((0,S-2))
 plt.ylim((0,0.35))
+plt.plot(J[0:S-1])
 plt.show()
 
 print("--- %s seconds ---" % (time.time() - start_time))
