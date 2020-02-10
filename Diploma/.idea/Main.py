@@ -31,15 +31,12 @@ def q_init(x):
      #2 * x - 1 + 2 * np.sin(5 * x * np.pi) + 0.35
      return np.sin(3*x*np.pi)
 
-
 for n in range(0, N + 1):
     init_q.append(q_init(x[n]))
-
 
 def u_init(x):
     return (x ** 2 - x - 2) \
            - 6 * np.tanh((-3 * x + 0.75) / eps)
-
 
 def direct_problem(eps, M, N, u_left, u_right, t, x, q, h):
     def func(y, t, x, q):
@@ -102,7 +99,6 @@ def direct_problem(eps, M, N, u_left, u_right, t, x, q, h):
         u[m + 1, N] = u_right
     return u
 
-
 def conjucate_problem(eps, M, N, t, x, q, h, u, f_obs):
     def func_psi(y, u, t, q):
         f = np.zeros((N - 1, 1))
@@ -151,7 +147,6 @@ def conjucate_problem(eps, M, N, t, x, q, h, u, f_obs):
 
     return psi
 
-
 def gradient_calculation(u, psi, tau, M, N):
     res = np.zeros(N+1)
     for n in range(N+1):
@@ -159,13 +154,11 @@ def gradient_calculation(u, psi, tau, M, N):
             res[n] += (u[m, n] * psi[m, n] + u[m - 1, n] * psi[m - 1, n]) * tau / 2
     return res
 
-
 def functional_calculation(u, f_obs, h, N):
     res = 0
     for n in range(1, N + 1):
         res += ((u[n] - f_obs[n]) ** 2 + (u[n - 1] - f_obs[n - 1]) ** 2) * h / 2
     return res
-
 
 tmp = direct_problem(eps, M, N, u_left, u_right, t, x, init_q, h)
 
@@ -209,8 +202,6 @@ anim = animation.FuncAnimation(fig2, animate)
 # anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
 plt.show()
 
-plt.xlim((0,S-2))
-plt.ylim((0,0.35))
 plt.plot(J[0:S-1])
 plt.show()
 
