@@ -22,10 +22,10 @@ t = np.linspace(t_0, T, M + 1)
 x = np.linspace(a, b, N + 1)
 init_q = []
 S = 50  # Количество итераций
-ss = np.linspace(0,S-2,S-1)
 q = np.zeros((S, N + 1))
 J = np.zeros(S)
 beta = 25
+f_obs = []
 
 def q_init(x):
      #2 * x - 1 + 2 * np.sin(5 * x * np.pi) + 0.35
@@ -85,7 +85,7 @@ def direct_problem(eps, M, N, u_left, u_right, t, x, q, h):
     u = np.zeros((M + 1, N + 1))
     y = np.zeros((M + 1, N - 1))
     for n in range(N + 1):
-        u[0, n] = u_init(x[n])
+        u[0, n] = q_init(x[n]) # ili u_init
     y[0, :] = u[0, 1:N]
 
     for m in range(M):
@@ -151,7 +151,7 @@ def gradient_calculation(u, psi, tau, M, N):
     res = np.zeros(N+1)
     for n in range(N+1):
         for m in range(1, M + 1):
-            res[n] += (u[m, n] * psi[m, n] + u[m - 1, n] * psi[m - 1, n]) * tau / 2
+            res[n] = (u[m, n] * psi[m, n] + u[m - 1, n] * psi[m - 1, n]) * tau / 2
     return res
 
 def functional_calculation(u, f_obs, h, N):
