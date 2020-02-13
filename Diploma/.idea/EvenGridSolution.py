@@ -23,19 +23,26 @@ def tmp_f(x, t):
               + 2 * np.sin(x) \
               + ((1 - 2 * t) ** 2) * np.sin(x) * np.cos(x) \
               - np.sin(3 * x) * (1 - 2 * t) * np.sin(x)
+
+
     return tmp_var
+
 
 def q_init(x):
     return np.sin(3 * x)
 
+
 for n in range(0, N + 1):
     q.append(q_init(x[n]))
+
 
 def u_init(x):
     return np.sin(x)
 
+
 def u_model(x, t):
     return (1 - 2 * t) * np.sin(x)
+
 
 def func(y, t, x, q):
     f = np.zeros((N - 1, 1))

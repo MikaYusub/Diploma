@@ -21,7 +21,7 @@ tau = (T - t_0) / M
 t = np.linspace(t_0, T, M + 1)
 x = np.linspace(a, b, N + 1)
 init_q = []
-S = 50  # Количество итераций
+S = 550  # Количество итераций
 q = np.zeros((S, N + 1))
 J = np.zeros(S)
 beta = 25
@@ -172,6 +172,8 @@ for s in range(S-1):  ## while -> condition
     dJ = gradient_calculation(u, psi, tau, M, N)
     q[s + 1, :] = q[s, :] - beta * dJ
 
+plt.plot(J[0:S-1])
+plt.show()
 
 # ax = plt.axes(xlim=(a, b), ylim=(u_left, u_right))
 # def animate(i):
@@ -197,12 +199,9 @@ def animate(i):
     line2.set_ydata(q_init(x))
     return line
 
-anim = animation.FuncAnimation(fig2, animate)
-# FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
-# anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
-plt.show()
-
-plt.plot(J[0:S-1])
+anim = animation.FuncAnimation(fig2, animate, frames= S, interval=100)
+FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
+anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
 plt.show()
 
 print("--- %s seconds ---" % (time.time() - start_time))

@@ -21,9 +21,6 @@ def u_init(x):
     return (((2 - x) - (x + 4) * np.exp((3 * x - 0.75) / eps)) / (1 + np.exp((3 * x - 0.75) / eps))) + 3
 
 
-# Исправить индексы
-
-
 def B(u, x):
     return -u
 

@@ -7,7 +7,7 @@ plt.rcParams['animation.ffmpeg_path'] = r'C:\FFmpeg\bin\ffmpeg'
 
 eps = 0.03
 M = 200
-N = 500
+N = 100
 u_left = -8
 u_right = 4
 a = 0
