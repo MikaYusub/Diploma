@@ -34,13 +34,6 @@ def q_init(x):
 for n in range(0, N + 1):
     q.append(q_init(x[n]))
 
-
-u = np.zeros((M+1,N+1))
-for m in range(M+1):
-    for n in range(N+1):
-        u[m,n] = x[n]*np.exp(-x[n]*t[m])
-
-
 def psi_model(x,t):
     return (1 - 2 * t) * np.sin(x)
 

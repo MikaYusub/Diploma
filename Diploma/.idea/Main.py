@@ -8,8 +8,8 @@ start_time = time.time()
 plt.rcParams['animation.ffmpeg_path'] = r'C:\FFmpeg\bin\ffmpeg'
 
 eps = 0.3
-M = 50
-N = 50
+M = 45
+N = 45
 u_left = -8
 u_right = 4
 a = 0
@@ -21,14 +21,14 @@ tau = (T - t_0) / M
 t = np.linspace(t_0, T, M + 1)
 x = np.linspace(a, b, N + 1)
 init_q = []
-S = 550  # Количество итераций
+S = 70 # Количество итераций
 q = np.zeros((S, N + 1))
 J = np.zeros(S)
-beta = 25
+beta = 77
 f_obs = []
 
 def q_init(x):
-     #2 * x - 1 + 2 * np.sin(5 * x * np.pi) + 0.35
+     # return 2 * x - 1 + 2 * np.sin(5 * x * np.pi) + 0.35
      return np.sin(3*x*np.pi)
 
 for n in range(0, N + 1):
@@ -142,9 +142,8 @@ def conjucate_problem(eps, M, N, t, x, q, h, u, f_obs):
         tmp2 = (t[m - 1] - t[m]) * w_1.real
         y[m - 1, :] = y[m, :] + np.transpose(tmp2)
         psi[m - 1, 1:N] = y[m - 1, :]
-        psi[:, 0] = 0
-        psi[:, N] = 0
-
+    psi[:, 0] = 0
+    psi[:, N] = 0
     return psi
 
 def gradient_calculation(u, psi, tau, M, N):
@@ -163,7 +162,7 @@ def functional_calculation(u, f_obs, h, N):
 tmp = direct_problem(eps, M, N, u_left, u_right, t, x, init_q, h)
 
 f_obs = tmp[M, :]
-# q[0,:]=
+# q[0,:]= init_q
 for s in range(S-1):  ## while -> condition
     print(s)
     u = direct_problem(eps, M, N, u_left, u_right, t, x, q[s, :], h)
@@ -200,8 +199,8 @@ def animate(i):
     return line
 
 anim = animation.FuncAnimation(fig2, animate, frames= S, interval=100)
-FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
-anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
+# FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
+# anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
 plt.show()
 
 print("--- %s seconds ---" % (time.time() - start_time))
