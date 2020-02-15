@@ -21,8 +21,8 @@ init_q = [];
 q = np.zeros(N+1)
 
 def q_init(x):
-    # return 2*x - 1 +2*np.sin(5*x*np.pi)+0.35
-    return np.sin(3 * x * np.pi)
+    return 2*x - 1 +2*np.sin(5*x*np.pi)+0.35
+    # return np.sin(3 * x * np.pi)
 
 for n in range(0, N + 1):
     init_q.append(q_init(x[n]))
@@ -162,7 +162,7 @@ def conjucate_problem(eps, M, N, t, x, q, h, u, f_obs):
     psi[:, N] = 0
 
     fig2 = plt.figure(facecolor='white')
-    ax = plt.axes(xlim=(-0.1, 1.1), ylim=(-0.1, 8))
+    ax = plt.axes(xlim=(-0.1, 1.1), ylim=(-8, 0.5))
     line, = ax.plot([], [], lw=1, color='red')
     line2, = ax.plot([], [], lw=1, color='green')
 
@@ -174,8 +174,8 @@ def conjucate_problem(eps, M, N, t, x, q, h, u, f_obs):
         return line
 
     anim = animation.FuncAnimation(fig2, animate, frames= 1 + M, interval=50)
-    # FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
-    # anim.save(r'C:\Users\FS\Desktop\Main Mission\ConjTest.mp4', writer=FFwriter)
+    FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
+    anim.save(r'C:\Users\FS\Desktop\Main Mission\ConjTest.mp4', writer=FFwriter)
     plt.show()
     return psi
 
