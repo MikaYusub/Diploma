@@ -85,7 +85,7 @@ def direct_problem(eps, M, N, u_left, u_right, t, x, q, h):
     u = np.zeros((M + 1, N + 1))
     y = np.zeros((M + 1, N - 1))
     for n in range(N + 1):
-        u[0, n] = u_init(x[n]) # ili u_init
+        u[0, n] = u_init(x[n])
     y[0, :] = u[0, 1:N]
 
     for m in range(M):

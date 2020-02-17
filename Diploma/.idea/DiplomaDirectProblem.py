@@ -145,7 +145,7 @@ def conjucate_problem(eps, M, N, t, x, q, h, u, f_obs):
     psi[:, N] = 0
 
     fig2 = plt.figure(facecolor='white')
-    ax = plt.axes(xlim=(0, 1), ylim=(-13, 3))
+    ax = plt.axes(xlim=(0, 1), ylim=(-9, 5))
     line, = ax.plot([], [], lw=1, color='red')
     line2, = ax.plot([], [], lw=1, color='green',linestyle='--')
 
@@ -155,8 +155,9 @@ def conjucate_problem(eps, M, N, t, x, q, h, u, f_obs):
         line2.set_xdata(x)
         line2.set_ydata(psi[M,:])
         return line
-
-    anim = animation.FuncAnimation(fig2, animate, frames=1 + M, interval=50)
+    plt.plot(x,psi[90,:])
+    plt.plot(x,psi[M,:],color='green',linestyle='--')
+    # anim = animation.FuncAnimation(fig2, animate, frames=1 + M, interval=50)
     # FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
     # anim.save(r'C:\Users\FS\Desktop\Main Mission\ConjTest.mp4', writer=FFwriter)
     plt.show()
