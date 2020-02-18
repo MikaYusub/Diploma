@@ -1,13 +1,15 @@
 import numpy as np
+import cProfile
 import matplotlib.pyplot as plt
-from numpy.linalg import inv, solve
+from numpy.linalg import solve
 import matplotlib.animation as animation
 import time
+
 
 start_time = time.time()
 plt.rcParams['animation.ffmpeg_path'] = r'C:\FFmpeg\bin\ffmpeg'
 
-eps = 0.3
+eps = 0.1
 M = 45
 N = 45
 u_left = -8
@@ -21,11 +23,30 @@ tau = (T - t_0) / M
 t = np.linspace(t_0, T, M + 1)
 x = np.linspace(a, b, N + 1)
 init_q = []
-S = 20 # Количество итераций
+S = 10 # Количество итераций
 q = np.zeros((S, N + 1))
 J = np.zeros(S)
-beta = 77
+beta = 0.01
 f_obs = []
+
+
+def TDMAsolver(aa, bb, cc, B):
+
+    nf = len(B)  # number of equations
+    v = np.zeros((nf,1),dtype=complex)
+    X = np.zeros((nf,1),dtype=complex)
+
+    w = aa[0]
+    X[0] = B[0]/w
+
+    for i in range(1,nf):
+        v[i-1] = cc[i - 1] / w
+        w = aa[i] - bb[i] * v[i - 1]
+        X[i] = (B[i] - bb[i] * X[i - 1]) / w
+
+    for j in range(nf-2,-1,-1):
+        X[j] = X[j] - v[j]*X[j+1]
+    return X
 
 def q_init(x):
      # return 2 * x - 1 + 2 * np.sin(5 * x * np.pi) + 0.35
@@ -40,7 +61,7 @@ def u_init(x):
 
 def direct_problem(eps, M, N, u_left, u_right, t, x, q, h):
     def func(y, t, x, q):
-        f = np.zeros((N - 1, 1))
+        f = np.zeros(N - 1)
         f.itemset(0,
                   (eps * (y[1] - 2 * y[0] + u_left) / h ** 2)
                   + (y[0] * (y[1] - u_left) / (2 * h))
@@ -59,28 +80,21 @@ def direct_problem(eps, M, N, u_left, u_right, t, x, q, h):
                   )
         return f
 
-    def func_y(y, q):
-        f_y = np.zeros((N - 1, N - 1), dtype='float64')
-        f_y.itemset((0, 0),
-                    (-2 * eps / h ** 2)
-                    + ((y[1] - u_left) / (2 * h))
-                    - q[1])
-        for n in range(1, N - 1):
-            f_y.itemset((n, n - 1),
-                        eps / h ** 2 - y[n] / (2 * h))
-        for n in range(1, N - 2):
-            f_y.itemset((n, n),
-                        -2 * eps / h ** 2
-                        + ((y[n + 1] - y[n - 1]) / (2 * h)) - q[n + 1])
-        for n in range(0, N - 2):
-            f_y.itemset((n, n + 1),
-                        eps / h ** 2 + y[n] / (2 * h))
+    def DiagPrepDirect(eps, tau, q, h, y):
+        a_diag = np.zeros(N - 1, dtype=complex)
+        b_diag = np.zeros(N - 1, dtype=complex)
+        c_diag = np.zeros(N - 1, dtype=complex)
 
-        f_y.itemset((-1, -1),
-                    -2 * eps / h ** 2
-                    + ((u_right - y[N - 3]) / (2 * h))
-                    - q[N - 1])
-        return f_y
+        a_diag[0] = 1 - (1 + 1j) / 2 * tau * (-2 * eps / h ** 2) + ((y[1] - u_left) / (2 * h)) - q[1]
+        for n in range(1, N - 1):
+            b_diag[n] = -(1 + 1j) / 2 * tau * (eps / h ** 2 - y[n] / (2 * h))
+        for n in range(1, N - 2):
+            a_diag[n] = 1 - (1 + 1j) / 2 * tau * (-2 * eps / h ** 2 + ((y[n + 1] - y[n - 1]) / (2 * h)) - q[n + 1])
+        for n in range(0, N - 2):
+            c_diag[n] = -(1 + 1j) / 2 * tau * (eps / h ** 2 + y[n] / (2 * h))
+        a_diag[N - 2] = 1 - (1 + 1j) / 2 * tau * (-2 * eps / h ** 2 + ((u_right - y[N - 3]) / (2 * h)) - q[N - 1])
+
+        return a_diag, b_diag, c_diag
 
     u = np.zeros((M + 1, N + 1))
     y = np.zeros((M + 1, N - 1))
@@ -89,10 +103,13 @@ def direct_problem(eps, M, N, u_left, u_right, t, x, q, h):
     y[0, :] = u[0, 1:N]
 
     for m in range(M):
-        tmp = ((1 + 1j) * (t[m + 1] - t[m]) / 2)
-        tmp1 = np.eye(N - 1) - tmp * (func_y(y[m, :], q))
-        w_1 = solve(tmp1, func(y[m, :], (t[m] + t[m + 1]) / 2, x, q))
-        tmp2 = (t[m + 1] - t[m]) * w_1.real
+        a_diag, b_diag, c_diag = DiagPrepDirect(eps, tau, q, h, y[m, :])
+        w_1 = TDMAsolver(a_diag,
+                         b_diag,
+                         c_diag,
+                         func(y[m, :], (t[m] + t[m + 1])/2, x, q))
+
+        tmp2 = tau * w_1.real
         y[m + 1] = y[m] + np.transpose(tmp2)
         u[m + 1, 1:N] = y[m + 1]
         u[m + 1, 0] = u_left
@@ -101,7 +118,7 @@ def direct_problem(eps, M, N, u_left, u_right, t, x, q, h):
 
 def conjucate_problem(eps, M, N, t, x, q, h, u, f_obs):
     def func_psi(y, u, t, q):
-        f = np.zeros((N - 1, 1))
+        f = np.zeros(N - 1)
         f.itemset(0,
                   (-eps * (y[1] - 2 * y[0]) / h ** 2)
                   + (u[1] * y[1] / (2 * h))
@@ -120,15 +137,19 @@ def conjucate_problem(eps, M, N, t, x, q, h, u, f_obs):
                   )
         return f
 
-    def func_y_psi(u, q):
-        f_y = np.zeros((N - 1, N - 1), dtype='float64')
+    def DiagPrepConjugate(eps, tau, q, h, u):
+        a_diag = np.zeros(N - 1, dtype=complex)
+        b_diag = np.zeros(N - 1, dtype=complex)
+        c_diag = np.zeros(N - 1, dtype=complex)
+
         for n in range(1, N - 1):
-            f_y.itemset((n, n - 1), -eps / h ** 2 - u[n+1] / (2 * h))
+            b_diag[n] = (1 + 1j) / 2 * tau * (-eps / h ** 2 - u[n + 1] / (2 * h))
         for n in range(0, N - 1):
-            f_y.itemset((n, n), 2 * eps / h ** 2 + q[n+1])
+            a_diag[n] = 1 + (1 + 1j) / 2 * tau * (2 * eps / h ** 2 + q[n + 1])
         for n in range(0, N - 2):
-            f_y.itemset((n, n + 1), (-eps / h ** 2) + (u[n+1] / (2 * h)))
-        return f_y
+            c_diag[n] = (1 + 1j) / 2 * tau * ((-eps / h ** 2) + (u[n + 1] / (2 * h)))
+
+        return a_diag, b_diag, c_diag
 
     psi = np.zeros((M + 1, N + 1))
     y = np.zeros((M + 1, N - 1))
@@ -136,15 +157,16 @@ def conjucate_problem(eps, M, N, t, x, q, h, u, f_obs):
     psi[M, :] = -2 * (u[M, :] - f_obs)
     y[M, :] = psi[M, 1:N]
     for m in range(M, 0, -1):
-        tmp = ((1 + 1j) * (t[m - 1] - t[m]) / 2)
-        tmp1 = np.eye(N - 1) - tmp * (func_y_psi(u[m, :], q))
-        w_1 = solve(tmp1, func_psi(y[m, :], u[m, :], (t[m] + t[m - 1]) / 2, q))
+        a_diag_conj, b_diag_conj, c_diag_conj = DiagPrepConjugate(eps, tau, q, h, u[m, :])
+        w_1 = TDMAsolver(a_diag_conj,
+                         b_diag_conj,
+                         c_diag_conj,
+                         func_psi(y[m, :], u[m, :], (t[m] + t[m - 1]) / 2,q))
         tmp2 = (t[m - 1] - t[m]) * w_1.real
         y[m - 1, :] = y[m, :] + np.transpose(tmp2)
         psi[m - 1, 1:N] = y[m - 1, :]
-        psi[:, 0] = 0
-        psi[:, N] = 0
-
+    psi[:, 0] = 0
+    psi[:, N] = 0
     return psi
 
 def gradient_calculation(u, psi, tau, M, N):
@@ -172,36 +194,24 @@ for s in range(S-1):  ## while -> condition
     dJ = gradient_calculation(u, psi, tau, M, N)
     q[s + 1, :] = q[s, :] - beta * dJ
 
-plt.plot(J[0:S-1])
-plt.show()
+print("--- %s seconds ---" % (time.time() - start_time))
 
-# ax = plt.axes(xlim=(a, b), ylim=(u_left, u_right))
+# plt.plot(J[0:S-1])
+# plt.show()
+#
+# fig2 = plt.figure(facecolor='white')
+# ax = plt.axes(xlim=(0, 1), ylim=(-2, 2))
+# line, = ax.plot([], [], lw=1, color='red')
+# line2, = ax.plot([], [], lw=1, color='green')
+#
 # def animate(i):
 #     line.set_xdata(x)
-#     line.set_ydata(u[i,:])
+#     line.set_ydata(q[i,:])
 #     line2.set_xdata(x)
-#     line2.set_ydata(u_init(x))
-#     return line,line2
+#     line2.set_ydata(q_init(x))
+#     return line
 #
-# anim = animation.FuncAnimation(fig2, animate, frames=1+M, interval=50)
-# # FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
-# # anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
-# plt.show()
-fig2 = plt.figure(facecolor='white')
-ax = plt.axes(xlim=(0, 1), ylim=(-4, 8))
-line, = ax.plot([], [], lw=1, color='red')
-line2, = ax.plot([], [], lw=1, color='green')
-
-def animate(i):
-    line.set_xdata(x)
-    line.set_ydata(u[i,:])
-    line2.set_xdata(x)
-    line2.set_ydata(u_init(x))
-    return line,line2
-
-anim = animation.FuncAnimation(fig2, animate, frames= S, interval=100)
+# anim = animation.FuncAnimation(fig2, animate, frames= S, interval=100)
 # FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
 # anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
-plt.show()
-
-print("--- %s seconds ---" % (time.time() - start_time))
+# plt.show()

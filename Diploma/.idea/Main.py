@@ -1,4 +1,5 @@
 import numpy as np
+import cProfile
 import matplotlib.pyplot as plt
 from numpy.linalg import solve
 import matplotlib.animation as animation
