@@ -2,16 +2,17 @@ import numpy as np
 import cProfile
 import matplotlib.pyplot as plt
 from numpy.linalg import solve
+from scipy.linalg import solve_banded
+from scipy.sparse import diags
 import matplotlib.animation as animation
 import time
-
 
 start_time = time.time()
 plt.rcParams['animation.ffmpeg_path'] = r'C:\FFmpeg\bin\ffmpeg'
 
 eps = 0.1
-M = 45
-N = 45
+M = 200
+N = 200
 u_left = -8
 u_right = 4
 a = 0
@@ -23,30 +24,22 @@ tau = (T - t_0) / M
 t = np.linspace(t_0, T, M + 1)
 x = np.linspace(a, b, N + 1)
 init_q = []
-S = 10 # Количество итераций
+S = 60 # Количество итераций
 q = np.zeros((S, N + 1))
 J = np.zeros(S)
 beta = 0.01
 f_obs = []
 
+def MyTDMAsolver(aa, bb, cc, B):
 
-def TDMAsolver(aa, bb, cc, B):
-
-    nf = len(B)  # number of equations
-    v = np.zeros((nf,1),dtype=complex)
-    X = np.zeros((nf,1),dtype=complex)
-
-    w = aa[0]
-    X[0] = B[0]/w
-
-    for i in range(1,nf):
-        v[i-1] = cc[i - 1] / w
-        w = aa[i] - bb[i] * v[i - 1]
-        X[i] = (B[i] - bb[i] * X[i - 1]) / w
-
-    for j in range(nf-2,-1,-1):
-        X[j] = X[j] - v[j]*X[j+1]
+    n = len(B)
+    Ab = np.zeros((3, n),dtype=complex)
+    Ab[0, 1:] = cc[:-1]
+    Ab[1, :] = aa
+    Ab[2, :-1] = bb[1:]
+    X = solve_banded((1,1),Ab,B)
     return X
+
 
 def q_init(x):
      # return 2 * x - 1 + 2 * np.sin(5 * x * np.pi) + 0.35
@@ -104,7 +97,7 @@ def direct_problem(eps, M, N, u_left, u_right, t, x, q, h):
 
     for m in range(M):
         a_diag, b_diag, c_diag = DiagPrepDirect(eps, tau, q, h, y[m, :])
-        w_1 = TDMAsolver(a_diag,
+        w_1 = MyTDMAsolver(a_diag,
                          b_diag,
                          c_diag,
                          func(y[m, :], (t[m] + t[m + 1])/2, x, q))
@@ -158,7 +151,7 @@ def conjucate_problem(eps, M, N, t, x, q, h, u, f_obs):
     y[M, :] = psi[M, 1:N]
     for m in range(M, 0, -1):
         a_diag_conj, b_diag_conj, c_diag_conj = DiagPrepConjugate(eps, tau, q, h, u[m, :])
-        w_1 = TDMAsolver(a_diag_conj,
+        w_1 = MyTDMAsolver(a_diag_conj,
                          b_diag_conj,
                          c_diag_conj,
                          func_psi(y[m, :], u[m, :], (t[m] + t[m - 1]) / 2,q))
@@ -194,24 +187,26 @@ for s in range(S-1):  ## while -> condition
     dJ = gradient_calculation(u, psi, tau, M, N)
     q[s + 1, :] = q[s, :] - beta * dJ
 
+
+
 print("--- %s seconds ---" % (time.time() - start_time))
 
-# plt.plot(J[0:S-1])
-# plt.show()
-#
-# fig2 = plt.figure(facecolor='white')
-# ax = plt.axes(xlim=(0, 1), ylim=(-2, 2))
-# line, = ax.plot([], [], lw=1, color='red')
-# line2, = ax.plot([], [], lw=1, color='green')
-#
-# def animate(i):
-#     line.set_xdata(x)
-#     line.set_ydata(q[i,:])
-#     line2.set_xdata(x)
-#     line2.set_ydata(q_init(x))
-#     return line
-#
-# anim = animation.FuncAnimation(fig2, animate, frames= S, interval=100)
+plt.plot(J[0:S-1])
+plt.show()
+
+fig2 = plt.figure(facecolor='white')
+ax = plt.axes(xlim=(0, 1), ylim=(-2, 2))
+line, = ax.plot([], [], lw=1, color='red')
+line2, = ax.plot([], [], lw=1, color='green')
+
+def animate(i):
+    line.set_xdata(x)
+    line.set_ydata(q[i,:])
+    line2.set_xdata(x)
+    line2.set_ydata(q_init(x))
+    return line
+
+anim = animation.FuncAnimation(fig2, animate, frames= S, interval=100)
 # FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
 # anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
-# plt.show()
+plt.show()
