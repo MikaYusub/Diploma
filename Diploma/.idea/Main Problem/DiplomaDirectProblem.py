@@ -2,27 +2,22 @@ import numpy as np
 from utilities import Utils
 
 class DirectProblem:
-    def direct_problem(eps, M, N, u_left, u_right, t, x, q, h,tau):
+    def direct_problem(a,b,eps, M, N, u_left, u_right, t, x, q, h,tau):
 
-        def u_init(x):
-            return (x ** 2 - x - 2) - 6 * np.tanh((-3 * x + 0.75) / eps)
+        u_init = list(map(lambda i: (i ** 2 - i - 2) - 6 * np.tanh((-3 * i + 0.75) / eps), x))
 
         def func(y, t, x, q):
             f = np.zeros(N - 1)
             f[0] = (eps * (y[1] - 2 * y[0] + u_left) / h ** 2) + (y[0] * (y[1] - u_left) / (2 * h)) - y[0] * q[1]
             for n in range(1, N - 2):
-                f[n] = (eps * (y[n + 1] - 2 * y[n] + y[n - 1]) / h ** 2) \
-                       + (y[n] * (y[n + 1] - y[n - 1]) / (2 * h)) \
-                       - y[n] * q[n + 1]
-            f[N - 2] = (eps * (u_right - 2 * y[N - 2] + y[N - 3]) / h ** 2) \
-                       + (y[N - 2] * (u_right - y[N - 3]) / (2 * h)) \
-                       - y[N - 2] * q[N - 1]
+                f[n] = (eps * (y[n + 1] - 2 * y[n] + y[n - 1]) / h ** 2) + (y[n] * (y[n + 1] - y[n - 1]) / (2 * h)) - y[n] * q[n + 1]
+            f[N - 2] = (eps * (u_right - 2 * y[N - 2] + y[N - 3]) / h ** 2) + (y[N - 2] * (u_right - y[N - 3]) / (2 * h)) - y[N - 2] * q[N - 1]
             return f
 
         u = np.zeros((M + 1, N + 1))
         y = np.zeros((M + 1, N - 1))
         for n in range(N + 1):
-            u[0, n] = u_init(x[n])
+            u[0, n] = u_init[n]
         y[0, :] = u[0, 1:N]
 
         for m in range(M):
@@ -33,4 +28,5 @@ class DirectProblem:
             u[m + 1, 1:N] = y[m + 1]
             u[m + 1, 0] = u_left
             u[m + 1, N] = u_right
+        Utils.DrawDirect(u, a, b, x, u_left, u_right, M) #Отрисовка решения
         return u

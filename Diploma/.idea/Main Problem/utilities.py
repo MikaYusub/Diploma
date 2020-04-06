@@ -2,6 +2,7 @@ import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 from scipy.linalg import solve_banded
 import numpy as np
+
 class Utils:
     def DrawDirect(u,a,b,x,u_left,u_right,M):
         fig = plt.figure(facecolor='white')
@@ -84,7 +85,6 @@ class Utils:
             c_diag[n] = -(1 + 1j) / 2 * tau * (eps / h ** 2 + y[n] / (2 * h))
         a_diag[N - 2] = 1 - (1 + 1j) / 2 * tau * (-2 * eps / h ** 2 + ((u_right - y[N - 3]) / (2 * h)) - q[N - 1])
         return a_diag, b_diag, c_diag
-
     def DiagonalPreparationConjugate(eps, N, tau, q, h, u):
         a_diag = np.zeros(N - 1, dtype=complex)
         b_diag = np.zeros(N - 1, dtype=complex)
@@ -98,26 +98,22 @@ class Utils:
             c_diag[n] = (1 + 1j) / 2 * tau * ((-eps / h ** 2) + (u[n + 1] / (2 * h)))
 
         return a_diag, b_diag, c_diag
-
-    def TridiagonalMatrixAlgorithm(aa, bb, cc, B):
+    def TridiagonalMatrixAlgorithm(a_diag, b_diag, c_diag, B):
         n = len(B)
         Ab = np.zeros((3, n), dtype=complex)
-        Ab[0, 1:] = cc[:-1]
-        Ab[1, :] = aa
-        Ab[2, :-1] = bb[1:]
+        Ab[0, 1:] = c_diag[:-1]
+        Ab[1, :] = a_diag
+        Ab[2, :-1] = b_diag[1:]
         X = solve_banded((1, 1), Ab, B)
         return X
-
     def gradient_calculation(u, psi, tau, M, N):
         result = np.zeros(N + 1)
         for n in range(N + 1):
             for m in range(1, M + 1):
                 result[n] += (u[m, n] * psi[m, n] + u[m - 1, n] * psi[m - 1, n]) * tau / 2
-        return result
-
+        return resul
     def functional_calculation(u, f_obs, h, N):
         result = 0
         for n in range(1, N + 1):
             result += ((u[n] - f_obs[n]) ** 2 + (u[n - 1] - f_obs[n - 1]) ** 2) * h / 2
         return result
-

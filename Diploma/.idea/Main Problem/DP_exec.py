@@ -1,6 +1,6 @@
 import numpy as np
 from DiplomaDirectProblem import DirectProblem
-from utilities import Utils
+
 eps = 0.05;
 M = 200;
 N = 200
@@ -17,5 +17,5 @@ x = np.linspace(a, b, N + 1)
 
 init_q = list(map(lambda i : 2 * i - 1 + 2 * np.sin(5 * i * np.pi) + 0.35, x))
 
-u = DirectProblem.direct_problem(eps, M, N, u_left, u_right, t, x, init_q, h,tau)
-Utils.DrawDirect(u, a, b, x, u_left, u_right, M)
+u = DirectProblem.direct_problem(a, b, eps, M, N, u_left, u_right, t, x, init_q, h,tau)
+
