@@ -4,6 +4,8 @@ from scipy.linalg import solve_banded
 import numpy as np
 
 class Utils:
+
+    plt.rcParams['animation.ffmpeg_path'] = r'C:\FFmpeg\bin\ffmpeg'
     def DrawDirect(u,a,b,x,u_left,u_right,M):
         fig = plt.figure(facecolor='white')
         ax = plt.axes(xlim=(a, b), ylim=(u_left, u_right))
@@ -15,6 +17,8 @@ class Utils:
             return line
 
         anim = animation.FuncAnimation(fig, animate, frames=M, interval=100)
+        # FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
+        # anim.save(r'C:\Users\FS\Desktop\Main Mission\Direct_problem_anim.mp4', writer=FFwriter)
         plt.show()
     def DrawConjugate(S,x,q,init_q):
 

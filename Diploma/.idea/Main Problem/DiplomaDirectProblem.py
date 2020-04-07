@@ -29,4 +29,5 @@ class DirectProblem:
             u[m + 1, 0] = u_left
             u[m + 1, N] = u_right
         Utils.DrawDirect(u, a, b, x, u_left, u_right, M) #Отрисовка решения
+
         return u
