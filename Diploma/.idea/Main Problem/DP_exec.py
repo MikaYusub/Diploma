@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from DiplomaDirectProblem import DirectProblem
 from utilities import Utils
 
@@ -23,11 +22,3 @@ u_init = list(map(lambda i: (i ** 2 - i - 2) - 6 * np.tanh((-3 * i + 0.75) / eps
 u = DirectProblem.direct_problem(a, b, eps, M,
                                  N, u_left, u_right, t, x, init_q, h,tau,u_init)
 Utils.DrawDirect(u, a, b, x, u_left, u_right, M)  # Отрисовка решения
-plt.xlabel('x')
-plt.ylabel('u',rotation=0)
-plt.plot(x, u[0], 'k--')
-plt.plot(x, u[50], 'k-.')
-plt.plot(x, u[100], 'k-.')
-plt.plot(x, u[150], 'k-.')
-plt.plot(x, u[200], 'k-.')
-plt.show()

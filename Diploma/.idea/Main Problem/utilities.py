@@ -20,12 +20,16 @@ class Utils:
         # FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
         # anim.save(r'C:\Users\FS\Desktop\Main Mission\Direct_problem_anim.mp4', writer=FFwriter)
         plt.show()
+
+        plt.xlabel('x')
+        plt.ylabel('u', rotation=0)
+        plt.plot(x, u[0], 'k--')
+        plt.plot(x, u[50], 'k-.')
+        plt.plot(x, u[100], 'k-.')
+        plt.plot(x, u[150], 'k-.')
+        plt.plot(x, u[200], 'k-.')
+        plt.show()
     def DrawConjugate(psi,x,M):
-
-        def q_init(x):
-            return 2 * x - 1 + 2 * np.sin(5 * x * np.pi) + 0.35
-
-        plt.rcParams['animation.ffmpeg_path'] = r'C:\FFmpeg\bin\ffmpeg'
 
         fig2 = plt.figure(facecolor='white')
         ax = plt.axes(xlim=(0, 1), ylim=(-2, 2))
@@ -39,18 +43,21 @@ class Utils:
             return line
 
         anim = animation.FuncAnimation(fig2, animate, frames=M, interval=100)
-        FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
-        anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
+        # plt.rcParams['animation.ffmpeg_path'] = r'C:\FFmpeg\bin\ffmpeg'
+        # FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
+        # anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
+        plt.show()
+        plt.xlabel('x')
+        plt.ylabel('u', rotation=0)
+        plt.plot(x, psi[0], 'k--')
+        plt.plot(x, psi[200], 'k-.')
         plt.show()
     def DrawSolution(S,x,q,J,init_q):
 
-        def q_init(x):
-            return 2 * x - 1 + 2 * np.sin(5 * x * np.pi) + 0.35
-        plt.rcParams['animation.ffmpeg_path'] = r'C:\FFmpeg\bin\ffmpeg'
         # График зависимости функционала от номера итерации
         plt.plot(J[0:S - 1])
         plt.show()
-        plt.savefig('J.pdf')
+        # plt.savefig('J.jpg')
 
         fig2 = plt.figure(facecolor='white')
         ax = plt.axes(xlim=(0, 1), ylim=(-2, 2))
@@ -66,8 +73,9 @@ class Utils:
             return line
 
         anim = animation.FuncAnimation(fig2, animate, frames=S, interval=100)
-        FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
-        anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
+        # plt.rcParams['animation.ffmpeg_path'] = r'C:\FFmpeg\bin\ffmpeg'
+        # FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
+        # anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
         plt.show()
     def DiagonalPreparationDirect(N, eps, tau, q, h, y,u_left,u_right):
         a_diag = np.zeros(N - 1, dtype=complex)
@@ -78,10 +86,12 @@ class Utils:
         for n in range(1, N - 1):
             b_diag[n] = -(1 + 1j) / 2 * tau * (eps / h ** 2 - y[n] / (2 * h))
         for n in range(1, N - 2):
-            a_diag[n] = 1 - (1 + 1j) / 2 * tau * (-2 * eps / h ** 2 + ((y[n + 1] - y[n - 1]) / (2 * h)) - q[n + 1])
+            a_diag[n] = 1 - (1 + 1j) / 2 * tau * (-2 * eps / h ** 2
+                                                  + ((y[n + 1] - y[n - 1]) / (2 * h)) - q[n + 1])
         for n in range(0, N - 2):
             c_diag[n] = -(1 + 1j) / 2 * tau * (eps / h ** 2 + y[n] / (2 * h))
-        a_diag[N - 2] = 1 - (1 + 1j) / 2 * tau * (-2 * eps / h ** 2 + ((u_right - y[N - 3]) / (2 * h)) - q[N - 1])
+        a_diag[N - 2] = 1 - (1 + 1j) / 2 * tau * (-2 * eps / h ** 2
+                                                  + ((u_right - y[N - 3]) / (2 * h)) - q[N - 1])
         return a_diag, b_diag, c_diag
     def DiagonalPreparationConjugate(eps, N, tau, q, h, u):
         a_diag = np.zeros(N - 1, dtype=complex)
@@ -109,7 +119,7 @@ class Utils:
         for n in range(N + 1):
             for m in range(1, M + 1):
                 result[n] += (u[m, n] * psi[m, n] + u[m - 1, n] * psi[m - 1, n]) * tau / 2
-        return resul
+        return result
     def functional_calculation(u, f_obs, h, N):
         result = 0
         for n in range(1, N + 1):
