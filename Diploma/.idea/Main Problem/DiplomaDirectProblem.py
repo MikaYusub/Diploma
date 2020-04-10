@@ -2,9 +2,8 @@ import numpy as np
 from utilities import Utils
 
 class DirectProblem:
-    def direct_problem(a,b,eps, M, N, u_left, u_right, t, x, q, h,tau):
+    def direct_problem(a,b,eps, M, N, u_left, u_right, t, x, q, h,tau, u_init):
 
-        u_init = list(map(lambda i: (i ** 2 - i - 2) - 6 * np.tanh((-3 * i + 0.75) / eps), x))
 
         def func(y, t, x, q):
             f = np.zeros(N - 1)
@@ -28,6 +27,5 @@ class DirectProblem:
             u[m + 1, 1:N] = y[m + 1]
             u[m + 1, 0] = u_left
             u[m + 1, N] = u_right
-        Utils.DrawDirect(u, a, b, x, u_left, u_right, M) #Отрисовка решения
 
         return u

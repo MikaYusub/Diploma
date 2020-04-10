@@ -22,7 +22,9 @@ q = np.zeros((S, N + 1))
 beta = 0.125
 
 init_q = list(map(lambda i : 2 * i - 1 + 2 * np.sin(5 * i * np.pi) + 0.35, x))
-u = DirectProblem.direct_problem(eps, M, N, u_left, u_right, t, x, init_q, h,tau)
+u_init = list(map(lambda i: (i ** 2 - i - 2) - 6 * np.tanh((-3 * i + 0.75) / eps), x))
+
+u = DirectProblem.direct_problem(a,b,eps, M, N, u_left, u_right, t, x, init_q, h,tau,u_init)
 f_obs = u[M, :]
-ConjugateProblem.conjucate_problem(eps, M, N, t, x, q[S-1,:], h, u, f_obs,tau)
-Utils.DrawConjugate(S,x,q,init_q)
+psi = ConjugateProblem.conjucate_problem(eps, M, N, t, x, q[S-1,:], h, u, f_obs,tau)
+Utils.DrawConjugate(psi, x, M)

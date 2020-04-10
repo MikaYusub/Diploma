@@ -1,6 +1,7 @@
 
 import numpy as np
 from utilities import Utils
+
 class ConjugateProblem:
     def conjucate_problem(eps, M, N, t, x, q, h, u, f_obs,tau):
         def func_psi(y, u, t, q):

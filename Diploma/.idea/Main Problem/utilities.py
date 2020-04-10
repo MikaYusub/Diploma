@@ -20,16 +20,12 @@ class Utils:
         # FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
         # anim.save(r'C:\Users\FS\Desktop\Main Mission\Direct_problem_anim.mp4', writer=FFwriter)
         plt.show()
-    def DrawConjugate(S,x,q,init_q):
+    def DrawConjugate(psi,x,M):
 
         def q_init(x):
             return 2 * x - 1 + 2 * np.sin(5 * x * np.pi) + 0.35
 
         plt.rcParams['animation.ffmpeg_path'] = r'C:\FFmpeg\bin\ffmpeg'
-        # График зависимости функционала от номера итерации
-        # plt.plot(J[0:S - 1])
-        # plt.show()
-        # plt.savefig('J.pdf')
 
         fig2 = plt.figure(facecolor='white')
         ax = plt.axes(xlim=(0, 1), ylim=(-2, 2))
@@ -39,12 +35,10 @@ class Utils:
         # Анимация
         def animate(i):
             line.set_xdata(x)
-            line.set_ydata(q[i, :])
-            line2.set_xdata(x)
-            line2.set_ydata(init_q)
+            line.set_ydata(psi[i, :])
             return line
 
-        anim = animation.FuncAnimation(fig2, animate, frames=S, interval=100)
+        anim = animation.FuncAnimation(fig2, animate, frames=M, interval=100)
         FFwriter = animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
         anim.save(r'C:\Users\FS\Desktop\Main Mission\Conjucate_problem_solution.mp4', writer=FFwriter)
         plt.show()
